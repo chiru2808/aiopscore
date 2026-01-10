@@ -1,14 +1,12 @@
-import { ApplicationEventName } from '@activepieces/ee-shared'
+
 import {
     ApId,
-    AppConnectionOwners,
     AppConnectionScope,
     AppConnectionWithoutSensitiveData,
     ListAppConnectionOwnersRequestQuery,
     ListAppConnectionsRequestQuery,
     Permission,
     PrincipalType,
-    ReplaceAppConnectionsRequestBody,
     SeekPage,
     SERVICE_KEY_SECURITY_OPENAPI,
     UpdateConnectionValueRequestBody,
@@ -25,109 +23,77 @@ import { appConnectionService } from './app-connection-service/app-connection-se
 
 export const appConnectionController: FastifyPluginCallbackTypebox = (app, _opts, done) => {
     app.post('/', UpsertAppConnectionRequest, async (request, reply) => {
-        const appConnection = await appConnectionService(request.log).upsert({
-            platformId: request.principal.platform.id,
-            projectIds: [request.principal.projectId],
-            type: request.body.type,
-            externalId: request.body.externalId,
-            value: request.body.value,
-            displayName: request.body.displayName,
-            pieceName: request.body.pieceName,
-            ownerId: await securityHelper.getUserIdFromRequest(request),
-            scope: AppConnectionScope.PROJECT,
-            metadata: request.body.metadata,
+        const appConnection = await appConnectionService.upsert({
+            projectId: request.principal.projectId,
+            platformId: (request.principal as any).platform?.id,
+            request: {
+                ...(request.body as any),
+                value: request.body.value as any,
+            } as any,
         })
-        eventsHooks.get(request.log).sendUserEventFromRequest(request, {
-            action: ApplicationEventName.CONNECTION_UPSERTED,
-            data: {
-                connection: appConnection,
-            },
-        })
+
         await reply
             .status(StatusCodes.CREATED)
             .send(appConnection)
     })
 
+
     app.post('/:id', UpdateConnectionValueRequest, async (request) => {
-        const appConnection = await appConnectionService(request.log).update({
-            id: request.params.id,
-            platformId: request.principal.platform.id,
-            projectIds: [request.principal.projectId],
-            scope: AppConnectionScope.PROJECT,
+        // Note: Update not implemented in current service, using upsert as approximation
+        const existing = await appConnectionService.getOne(request.params.id)
+        if (!existing) {
+            throw new Error('Connection not found')
+        }
+        const appConnection = await appConnectionService.upsert({
+            projectId: request.principal.projectId,
+            platformId: (request.principal as any).platform?.id,
             request: {
+                externalId: existing.externalId,
                 displayName: request.body.displayName,
-                projectIds: null,
+                type: existing.type,
+                value: existing.value as any, // keep existing value
+                pieceName: (existing as any).pieceName,
                 metadata: request.body.metadata,
-            },
+            } as any,
         })
         return appConnection
     })
 
+
     app.get('/', ListAppConnectionsRequest, async (request): Promise<SeekPage<AppConnectionWithoutSensitiveData>> => {
         const { displayName, pieceName, status, cursor, limit, scope } = request.query
 
-        const appConnections = await appConnectionService(request.log).list({
-            pieceName,
-            displayName,
-            status,
-            scope,
-            platformId: request.principal.platform.id,
+        const appConnections = await appConnectionService.list({
             projectId: request.principal.projectId,
-            cursorRequest: cursor ?? null,
+            cursor: cursor ?? null,
             limit: limit ?? DEFAULT_PAGE_SIZE,
-            externalIds: undefined,
         })
 
         const appConnectionsWithoutSensitiveData: SeekPage<AppConnectionWithoutSensitiveData> = {
             ...appConnections,
-            data: appConnections.data.map(appConnectionService(request.log).removeSensitiveData),
+            data: appConnections.data.map((conn) => ({ ...conn, value: undefined } as unknown as AppConnectionWithoutSensitiveData)), // placeholder for removeSensitiveData
         }
         return appConnectionsWithoutSensitiveData
     },
     )
-    app.get('/owners', ListAppConnectionOwnersRequest, async (request): Promise<SeekPage<AppConnectionOwners>> => {
-        const owners = await appConnectionService(request.log).getOwners({
-            projectId: request.principal.projectId,
-            platformId: request.principal.platform.id,
-        })
-        return {
-            data: owners,
-            next: null,
-            previous: null,
-        }
-    },
-    )
 
-    app.post('/replace', ReplaceAppConnectionsRequest, async (request, reply) => {
-        const { sourceAppConnectionId, targetAppConnectionId } = request.body
-        await appConnectionService(request.log).replace({
-            sourceAppConnectionId,
-            targetAppConnectionId,
-            projectId: request.principal.projectId,
-            platformId: request.principal.platform.id,
-            userId: request.principal.id,
-        })
-        await reply.status(StatusCodes.OK).send()
-    })
+
+    // app.post('/replace', ReplaceAppConnectionsRequest, async (request, reply) => {
+    //     const { sourceAppConnectionId, targetAppConnectionId } = request.body
+    //     await appConnectionService.replace({
+    //         sourceAppConnectionId,
+    //         targetAppConnectionId,
+    //         projectId: request.principal.projectId,
+    //         platformId: request.principal.platform.id,
+    //         userId: request.principal.id,
+    //     })
+    //     await reply.status(StatusCodes.OK).send()
+    // })
 
     app.delete('/:id', DeleteAppConnectionRequest, async (request, reply): Promise<void> => {
-        const connection = await appConnectionService(request.log).getOneOrThrowWithoutValue({
-            id: request.params.id,
-            platformId: request.principal.platform.id,
-            projectId: request.principal.projectId,
-        })
-        eventsHooks.get(request.log).sendUserEventFromRequest(request, {
-            action: ApplicationEventName.CONNECTION_DELETED,
-            data: {
-                connection,
-            },
-        })
-        await appConnectionService(request.log).delete({
-            id: request.params.id,
-            platformId: request.principal.platform.id,
-            scope: AppConnectionScope.PROJECT,
-            projectId: request.principal.projectId,
-        })
+        const connection = await appConnectionService.getOneOrThrow(request.params.id)
+
+        await appConnectionService.delete(request.params.id)
         await reply.status(StatusCodes.NO_CONTENT).send()
     })
 
@@ -169,21 +135,7 @@ const UpdateConnectionValueRequest = {
     },
 }
 
-const ReplaceAppConnectionsRequest = {
-    config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
-        permission: Permission.WRITE_APP_CONNECTION,
-    },
-    schema: {
-        tags: ['app-connections'],
-        security: [SERVICE_KEY_SECURITY_OPENAPI],
-        description: 'Replace app connections',
-        body: ReplaceAppConnectionsRequestBody,
-        response: {
-            [StatusCodes.NO_CONTENT]: Type.Never(),
-        },
-    },
-}
+
 
 const ListAppConnectionsRequest = {
     config: {
@@ -200,21 +152,7 @@ const ListAppConnectionsRequest = {
         },
     },
 }
-const ListAppConnectionOwnersRequest = {
-    config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
-        permission: Permission.READ_APP_CONNECTION,
-    },
-    schema: {
-        querystring: ListAppConnectionOwnersRequestQuery,
-        tags: ['app-connections'],
-        security: [SERVICE_KEY_SECURITY_OPENAPI],
-        description: 'List app connection owners',
-        response: {
-            [StatusCodes.OK]: SeekPage(AppConnectionOwners),
-        },
-    },
-}
+
 
 const DeleteAppConnectionRequest = {
     config: {

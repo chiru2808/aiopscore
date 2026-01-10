@@ -1,4 +1,4 @@
-import { ApiKey } from '@activepieces/ee-shared'
+
 import {
     ActivepiecesError,
     assertNotNullOrUndefined,
@@ -16,14 +16,22 @@ import { nanoid } from 'nanoid'
 import { AppConnectionEntity } from '../../../app-connection/app-connection.entity'
 import { extractResourceName } from '../../../authentication/authorization'
 import { databaseConnection } from '../../../database/database-connection'
-import { apiKeyService } from '../../../ee/api-keys/api-key-service'
-import { ProjectMemberEntity } from '../../../ee/projects/project-members/project-member.entity'
+
+
 import { FlowEntity } from '../../../flows/flow/flow.entity'
 import { FlowRunEntity } from '../../../flows/flow-run/flow-run-entity'
 import { FolderEntity } from '../../../flows/folder/folder.entity'
 import { projectService } from '../../../project/project-service'
 import { requestUtils } from '../../request/request-utils'
 import { BaseSecurityHandler } from '../security-handler'
+
+import { ApiKey } from '@activepieces/shared'
+
+import { apiKeyService } from '../../../authentication/api-key/api-key.service'
+
+const getApiKeyByValue = async (value: string): Promise<ApiKey | null> => {
+    return apiKeyService.getOneByValue(value)
+}
 
 export class PlatformApiKeyAuthnHandler extends BaseSecurityHandler {
     private static readonly HEADER_NAME = 'authorization'
@@ -41,9 +49,17 @@ export class PlatformApiKeyAuthnHandler extends BaseSecurityHandler {
         const apiKeyValue = this.extractApiKeyValue(request)
         let apiKey: ApiKey | null = null
         try {
-            apiKey = await apiKeyService.getByValueOrThrow(apiKeyValue)
+            apiKey = await getApiKeyByValue(apiKeyValue)
         }
         catch (e) {
+            throw new ActivepiecesError({
+                code: ErrorCode.AUTHENTICATION,
+                params: {
+                    message: 'invalid api key',
+                },
+            })
+        }
+        if (isNil(apiKey)) {
             throw new ActivepiecesError({
                 code: ErrorCode.AUTHENTICATION,
                 params: {
@@ -198,8 +214,6 @@ export class PlatformApiKeyAuthnHandler extends BaseSecurityHandler {
                 return FlowEntity.options.name
             case 'app-connections':
                 return AppConnectionEntity.options.name
-            case 'project-members':
-                return ProjectMemberEntity.options.name
             case 'folders':
                 return FolderEntity.options.name
         }
@@ -215,6 +229,15 @@ export class PlatformApiKeyAuthnHandler extends BaseSecurityHandler {
                 code: ErrorCode.AUTHORIZATION,
                 params: {
                     message: 'invalid project id and platform id',
+                },
+            })
+        }
+        // Enforce Project Scope
+        if (apiKey.projectId && project.id !== apiKey.projectId) {
+            throw new ActivepiecesError({
+                code: ErrorCode.AUTHORIZATION,
+                params: {
+                    message: `API Key from project ${apiKey.projectId} cannot access project ${project.id}`,
                 },
             })
         }

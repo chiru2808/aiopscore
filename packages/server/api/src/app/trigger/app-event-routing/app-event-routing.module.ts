@@ -4,6 +4,7 @@ import { slack } from '@activepieces/piece-slack'
 import { square } from '@activepieces/piece-square'
 import { Piece } from '@activepieces/pieces-framework'
 import {
+    AppSystemProp,
     rejectedPromiseHandler,
 } from '@activepieces/server-shared'
 import {
@@ -21,8 +22,8 @@ import {
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { FastifyRequest } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
-import { domainHelper } from '../../ee/custom-domains/domain-helper'
 import { flowService } from '../../flows/flow/flow.service'
+import { system } from '../../helper/system/system'
 import { projectService } from '../../project/project-service'
 import { WebhookFlowVersionToRun, webhookHandler } from '../../webhooks/webhook-handler'
 import { jobQueue } from '../../workers/queue/job-queue'
@@ -91,7 +92,7 @@ export const appEventRoutingController: FastifyPluginAsyncTypebox = async (
             const { reply, event, identifierValue } = piece.events.parseAndReply({
                 payload,
                 server: {
-                    publicUrl: await domainHelper.getPublicUrl({ path: '' }),
+                    publicUrl: system.getOrThrow(AppSystemProp.ENVIRONMENT),
                 },
             })
             if (!isNil(reply)) {

@@ -24,7 +24,7 @@ import {
 } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
 import { LoadingScreen } from '@/components/ui/loading-screen';
-import { PushToGitDialog } from '@/features/git-sync/components/push-to-git-dialog';
+
 import { ApTableActionsMenu } from '@/features/tables/components/ap-table-actions-menu';
 import { tableHooks } from '@/features/tables/lib/table-hooks';
 import { tablesApi } from '@/features/tables/lib/tables-api';
@@ -41,10 +41,10 @@ const ApTablesPage = () => {
   const { data: project } = projectHooks.useCurrentProject();
   const { platform } = platformHooks.useCurrentPlatform();
   const userHasTableWritePermission = useAuthorization().checkAccess(
-    Permission.WRITE_TABLE,
+    Permission.WRITE_TABLE
   );
   const userHasPermissionToPushToGit = useAuthorization().checkAccess(
-    Permission.WRITE_PROJECT_RELEASE,
+    Permission.WRITE_PROJECT_RELEASE
   );
   const { data, isLoading, refetch } = tableHooks.useTables();
   const { mutate: createTable, isPending: isCreatingTable } =
@@ -77,7 +77,7 @@ const ApTablesPage = () => {
       ),
       cell: ({ row }) => {
         const isChecked = selectedRows.some(
-          (selectedRow) => selectedRow.id === row.original.id,
+          (selectedRow) => selectedRow.id === row.original.id
         );
         return (
           <Checkbox
@@ -90,7 +90,7 @@ const ApTablesPage = () => {
                 newSelectedRows.push(row.original);
               } else {
                 newSelectedRows = newSelectedRows.filter(
-                  (selectedRow) => selectedRow.id !== row.original.id,
+                  (selectedRow) => selectedRow.id !== row.original.id
                 );
               }
               setSelectedRows(newSelectedRows);
@@ -178,13 +178,13 @@ const ApTablesPage = () => {
               title={t('Delete Tables')}
               showToast={false}
               message={t(
-                'Are you sure you want to delete the selected tables? This action cannot be undone.',
+                'Are you sure you want to delete the selected tables? This action cannot be undone.'
               )}
               entityName={t('table')}
               mutationFn={async () => {
                 try {
                   await bulkDeleteMutation.mutateAsync(
-                    selectedRows.map((row) => row.id),
+                    selectedRows.map((row) => row.id)
                   );
                   resetSelection();
                   setSelectedRows([]);
@@ -203,26 +203,8 @@ const ApTablesPage = () => {
           </div>
         ),
       },
-      {
-        render: (_) => (
-          <div onClick={(e) => e.stopPropagation()}>
-            <PermissionNeededTooltip
-              hasPermission={userHasPermissionToPushToGit}
-            >
-              <PushToGitDialog type="table" tables={selectedRows}>
-                {selectedRows.length > 0 && (
-                  <Button className="w-full mr-2" size="sm" variant="outline">
-                    <UploadCloud className="mr-2 w-4" />
-                    {`${t('Push to Git')} (${selectedRows.length})`}
-                  </Button>
-                )}
-              </PushToGitDialog>
-            </PermissionNeededTooltip>
-          </div>
-        ),
-      },
     ],
-    [bulkDeleteMutation, selectedRows, userHasPermissionToPushToGit],
+    [bulkDeleteMutation, selectedRows, userHasPermissionToPushToGit]
   );
   if (isCreatingTable) {
     return <LoadingScreen mode="container" />;
@@ -234,7 +216,7 @@ const ApTablesPage = () => {
       locked={!platform.plan.tablesEnabled}
       lockTitle={t('Tables')}
       lockDescription={t(
-        'Create and manage your tables to store your automation data',
+        'Create and manage your tables to store your automation data'
       )}
     >
       <div className="flex-col w-full gap-4">
@@ -250,7 +232,7 @@ const ApTablesPage = () => {
           emptyStateIcon={<Table2 className="size-14" />}
           emptyStateTextTitle={t('No tables have been created yet')}
           emptyStateTextDescription={t(
-            'Create a table to get started and start managing your automation data',
+            'Create a table to get started and start managing your automation data'
           )}
           columns={columns}
           page={data}

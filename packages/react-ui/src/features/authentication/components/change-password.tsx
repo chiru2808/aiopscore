@@ -22,7 +22,7 @@ import { PasswordValidator } from '@/features/authentication/components/password
 import { passwordValidation } from '@/features/authentication/lib/password-validation-utils';
 import { HttpError } from '@/lib/api';
 import { authenticationApi } from '@/lib/authentication-api';
-import { ResetPasswordRequestBody } from '@activepieces/ee-shared';
+import { ResetPasswordRequest } from '@activepieces/shared';
 
 const ChangePasswordForm = () => {
   const navigate = useNavigate();
@@ -45,7 +45,7 @@ const ChangePasswordForm = () => {
   const { mutate, isPending } = useMutation<
     void,
     HttpError,
-    ResetPasswordRequestBody
+    ResetPasswordRequest
   >({
     mutationFn: authenticationApi.resetPassword,
     onSuccess: () => {
@@ -58,14 +58,19 @@ const ChangePasswordForm = () => {
     },
     onError: (error) => {
       setServerError(
-        t('Your password reset request has expired, please request a new one'),
+        t('Your password reset request has expired, please request a new one')
       );
       console.error(error);
     },
   });
 
-  const onSubmit: SubmitHandler<ResetPasswordRequestBody> = (data) => {
-    mutate(data);
+  const onSubmit: SubmitHandler<{ otp: string; newPassword: string }> = (
+    data
+  ) => {
+    mutate({
+      token: data.otp,
+      password: data.newPassword,
+    });
   };
 
   return (

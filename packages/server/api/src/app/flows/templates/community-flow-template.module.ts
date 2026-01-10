@@ -48,8 +48,15 @@ export const communityTemplates = {
                 'Content-Type': 'application/json',
             },
         })
-        const templates = await response.json()
-        return templates
+        const responseJson = await response.json() as any
+        const templates = responseJson.data.map((t: any) => ({
+            ...t,
+            template: t.flows?.[0],
+        }))
+        return {
+            ...responseJson,
+            data: templates,
+        } as SeekPage<FlowTemplate>
     },
 }
 

@@ -1,4 +1,4 @@
-import { EndpointScope, PrincipalType, Project, UpdateProjectRequestInCommunity } from '@activepieces/shared'
+import { EndpointScope, PrincipalType, Project, UpdateProjectRequestInCommunity, CreateProjectRequest, apId } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { paginationHelper } from '../helper/pagination/pagination-utils'
@@ -18,11 +18,38 @@ export const userProjectController: FastifyPluginAsyncTypebox = async (fastify) 
             allowedPrincipals: [PrincipalType.USER] as const,
         },
     }, async (request) => {
-        return paginationHelper.createPage([await projectService.getUserProjectOrThrow(request.principal.id)], null)
+        const projects = await projectService.getAllForUser({
+            platformId: request.principal.platform.id,
+            userId: request.principal.id,
+        })
+        return paginationHelper.createPage(projects, null)
     })
 }
 
+const CreateProjectRequestSchema = {
+    config: {
+        allowedPrincipals: [PrincipalType.USER] as const,
+        scope: EndpointScope.PLATFORM,
+    },
+    schema: {
+        tags: ['projects'],
+        body: CreateProjectRequest,
+        response: {
+            [StatusCodes.CREATED]: Project,
+        },
+    },
+}
+
 export const projectController: FastifyPluginAsyncTypebox = async (fastify) => {
+    fastify.post('/', CreateProjectRequestSchema, async (request) => {
+        return projectService.create({
+            id: apId(),
+            displayName: request.body.displayName,
+            ownerId: request.principal.id,
+            platformId: request.principal.platform.id,
+        })
+    })
+
     fastify.post('/:id', UpdateProjectRequest, async (request) => {
         const project = await projectService.getOneOrThrow(request.params.id)
         return projectService.update(request.params.id, {

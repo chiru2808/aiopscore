@@ -1,11 +1,12 @@
-import { rolePermissions } from '@activepieces/ee-shared'
+
 import { DefaultProjectRole, ProjectRole, RoleType } from '@activepieces/shared'
 import { repoFactory } from '../../core/db/repo-factory'
-import { ProjectRoleEntity } from '../../ee/projects/project-role/project-role.entity'
+
 import { system } from '../../helper/system/system'
 import { DataSeed } from './data-seed'
 
-const projectMemberRoleRepo = repoFactory(ProjectRoleEntity)
+// Role seeding disabled in Community Edition - using basic permission model
+// const projectMemberRoleRepo = repoFactory(ProjectRoleEntity)
 
 // DO NOT CHANGE THESE IDS OR SHUFFLE THEM
 const roleIds: Record<DefaultProjectRole, string> = {
@@ -17,16 +18,7 @@ const roleIds: Record<DefaultProjectRole, string> = {
 
 export const rolesSeed: DataSeed = {
     run: async () => {
-        system.globalLogger().info({ name: 'rolesSeed' }, 'Seeding roles')
-        for (const role of Object.values(DefaultProjectRole)) {
-            const permissions = rolePermissions[role]
-            const projectRole: Omit<ProjectRole, 'created' | 'updated'> = {
-                name: role,
-                permissions,
-                type: RoleType.DEFAULT,
-                id: roleIds[role],
-            }
-            await projectMemberRoleRepo().upsert(projectRole, ['id'])
-        }
+        // Role seeding is disabled in Community Edition
+        // Default permissions are managed through the basic permission model
     },
 }

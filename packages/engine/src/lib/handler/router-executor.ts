@@ -66,38 +66,88 @@ async function handleRouterExecution({ action, executionState, constants, censor
     executionState = executionState.upsertStep(action.name, routerOutput)
 
     const { data: executionStateResult, error: executionStateError } = await utils.tryCatchAndThrowOnEngineError(async () => {
-        for (let i = 0; i < resolvedInput.branches.length; i++) {
-            if (!isNil(constants.stepNameToTest)) {
-                break
+        if (routerExecutionType === RouterExecutionType.EXECUTE_ALL_MATCH) {
+            const promises: Promise<FlowExecutorContext>[] = []
+            for (let i = 0; i < resolvedInput.branches.length; i++) {
+                const condition = routerOutput.output?.branches[i].evaluation
+                if (condition) {
+                    promises.push(flowExecutor.execute({
+                        action: action.children[i],
+                        executionState: new FlowExecutorContext(executionState),
+                        constants,
+                    }))
+                }
             }
-            const condition = routerOutput.output?.branches[i].evaluation
-            if (!condition) {
-                continue
-            }
-    
-            executionState = await flowExecutor.execute({
-                action: action.children[i],
-                executionState,
-                constants,
+            const results = await Promise.all(promises)
+            results.forEach((result) => {
+                executionState = mergeExecutionStates(executionState, result)
             })
-    
-            const shouldBreakExecution = executionState.verdict.status !== FlowRunStatus.RUNNING || routerExecutionType === RouterExecutionType.EXECUTE_FIRST_MATCH
-            if (shouldBreakExecution) {
-                break
+        }
+        else {
+            for (let i = 0; i < resolvedInput.branches.length; i++) {
+                if (!isNil(constants.stepNameToTest)) {
+                    break
+                }
+                const condition = routerOutput.output?.branches[i].evaluation
+                if (!condition) {
+                    continue
+                }
+
+                executionState = await flowExecutor.execute({
+                    action: action.children[i],
+                    executionState,
+                    constants,
+                })
+
+                const shouldBreakExecution = executionState.verdict.status !== FlowRunStatus.RUNNING || routerExecutionType === RouterExecutionType.EXECUTE_FIRST_MATCH
+                if (shouldBreakExecution) {
+                    break
+                }
             }
         }
         return executionState
     })
     if (executionStateError) {
         const failedStepOutput = routerOutput.setStatus(StepOutputStatus.FAILED)
-        return executionState.upsertStep(action.name, failedStepOutput).setVerdict({ status: FlowRunStatus.FAILED, failedStep: {
-            name: action.name,
-            displayName: action.displayName,
-            message: utils.formatError(executionStateError),
-        } })
+        return executionState.upsertStep(action.name, failedStepOutput).setVerdict({
+            status: FlowRunStatus.FAILED, failedStep: {
+                name: action.name,
+                displayName: action.displayName,
+                message: utils.formatError(executionStateError),
+            }
+        })
     }
 
     return executionStateResult
+}
+
+function mergeExecutionStates(target: FlowExecutorContext, source: FlowExecutorContext): FlowExecutorContext {
+    // Merge steps
+    const mergedSteps = {
+        ...target.steps,
+        ...source.steps,
+    }
+
+    // Merge tags
+    const mergedTags = [...target.tags, ...source.tags].filter((value, index, self) => {
+        return self.indexOf(value) === index
+    })
+
+    // Update verdict if source failed or paused (priority: FAILED > PAUSED > RUNNING/SUCCEEDED)
+    let mergedVerdict = target.verdict
+    if (source.verdict.status === FlowRunStatus.FAILED) {
+        mergedVerdict = source.verdict
+    }
+    else if (source.verdict.status === FlowRunStatus.PAUSED && mergedVerdict.status !== FlowRunStatus.FAILED) {
+        mergedVerdict = source.verdict
+    }
+
+    return new FlowExecutorContext({
+        ...target,
+        steps: mergedSteps,
+        tags: mergedTags,
+        verdict: mergedVerdict,
+    } as any)
 }
 
 

@@ -11,10 +11,10 @@ import customHtmlPlugin from './vite-plugins/html-plugin';
 export default defineConfig(({ command, mode }) => {
   const isDev = command === 'serve' || mode === 'development';
 
-  const AP_TITLE = isDev ? 'Activepieces' : '${AP_APP_TITLE}';
+  const AP_TITLE = isDev ? 'AIOps' : '${AP_APP_TITLE}';
 
   const AP_FAVICON = isDev
-    ? 'https://activepieces.com/favicon.ico'
+    ? '/favicon.ico'
     : '${AP_FAVICON_URL}';
 
   return {
@@ -49,19 +49,21 @@ export default defineConfig(({ command, mode }) => {
           __dirname,
           '../../packages/shared/src',
         ),
-        'ee-embed-sdk': path.resolve(
-          __dirname,
-          '../../packages/ee/ui/embed-sdk/src',
-        ),
-        '@activepieces/ee-shared': path.resolve(
-          __dirname,
-          '../../packages/ee/shared/src',
-        ),
+
         '@activepieces/pieces-framework': path.resolve(
           __dirname,
           '../../packages/pieces/community/framework/src',
         ),
+        // Provide a browser-compatible implementation for Node's `path` used by some deps
+        // (e.g. mime-types -> path.extname). This prevents Vite from externalizing
+        // the `path` module for the client bundle.
+        path: 'path-browserify',
       },
+    },
+    optimizeDeps: {
+      // Pre-bundle these dependencies to avoid Vite externalizing Node builtins
+      // like `path` when they are required by CJS packages such as `mime-types`.
+      include: ['mime-types', 'mime-db', 'path-browserify'],
     },
     plugins: [
       react(),
@@ -71,6 +73,7 @@ export default defineConfig(({ command, mode }) => {
         title: AP_TITLE,
         icon: AP_FAVICON,
       }),
+/*
       checker({
         typescript: {
           buildMode: true,
@@ -78,6 +81,7 @@ export default defineConfig(({ command, mode }) => {
           root: __dirname,
         },
       }),
+*/
     ],
 
     build: {

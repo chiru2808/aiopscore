@@ -54,17 +54,20 @@ export const refillPausedRuns = (log: FastifyBaseLogger) => ({
                     behavior: UploadLogsBehavior.UPLOAD_DIRECTLY,
                     projectId: pausedRun.projectId,
                 })
-                try {
-                    const sharedQueue = jobQueue(log).getSharedQueue()
-                    const job = await sharedQueue.getJob(pausedRun.id)
-                    await job?.remove()
-                }
-                catch (e) {
-                    log.error({
-                        error: e,
-                        pausedRunId: pausedRun.id,
-                    }, '[refillPausedRuns] Error removing job')
-                }
+                // CE: No queue to remove jobs from
+                // try {
+                //     const sharedQueue = jobQueue(log).getSharedQueue()
+                //     if (sharedQueue) {
+                //         const job = await sharedQueue.getJob(pausedRun.id)
+                //         await job?.remove()
+                //     }
+                // }
+                // catch (e) {
+                //     log.error({
+                //         error: e,
+                //         pausedRunId: pausedRun.id,
+                //     }, '[refillPausedRuns] Error removing job')
+                // }
                 await jobQueue(log).add({
                     id: pausedRun.id,
                     type: JobType.ONE_TIME,

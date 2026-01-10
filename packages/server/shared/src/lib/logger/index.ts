@@ -1,11 +1,11 @@
 import { FastifyBaseLogger } from 'fastify'
 import pino, { Level, Logger } from 'pino'
-import 'pino-loki'
-import { createHyperDXTransport, HyperDXCredentials } from './hyperdx-pino'
-import { createLokiTransport, LokiCredentials } from './loki-pino'
+// import 'pino-loki'
+// import { createHyperDXTransport, HyperDXCredentials } from './hyperdx-pino'
+// import { createLokiTransport, LokiCredentials } from './loki-pino'
 
 export const pinoLogging = {
-    initLogger: (loggerLevel: Level | undefined, logPretty: boolean, loki: LokiCredentials, hyperdx: HyperDXCredentials): Logger => {
+    initLogger: (loggerLevel: Level | undefined, logPretty: boolean, _loki: any, _hyperdx: any): Logger => {
         const level: Level = loggerLevel ?? 'info'
         const pretty = logPretty ?? false
 
@@ -23,30 +23,13 @@ export const pinoLogging = {
             })
         }
         
-        const defaultTargets = [
-            {
-                target: 'pino/file',
-                level,
-                options: {},
-            },
-        ]
 
-        const hyperdxLogger = createHyperDXTransport(level, defaultTargets, hyperdx)
-        if (hyperdxLogger) {
-            return hyperdxLogger
-        }
 
-        const lokiLogger = createLokiTransport(level, defaultTargets, loki)
-        if (lokiLogger) {
-            return lokiLogger
-        }
+
 
         // Default logger
         return pino({
             level,
-            transport: {
-                targets: defaultTargets,
-            },
         })
     },
     createRunContextLog: ({ log, runId, webhookId, flowId, flowVersionId }: { log: FastifyBaseLogger, runId: string, webhookId: string | undefined, flowId: string, flowVersionId: string }) => {

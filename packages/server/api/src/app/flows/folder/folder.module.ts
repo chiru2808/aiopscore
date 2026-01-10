@@ -1,4 +1,4 @@
-import { ApplicationEventName } from '@activepieces/ee-shared'
+
 import {
     CreateFolderRequest,
     DeleteFolderRequest,
@@ -28,12 +28,7 @@ const folderController: FastifyPluginAsyncTypebox = async (fastify) => {
             projectId: request.principal.projectId,
             request: request.body,
         })
-        eventsHooks.get(request.log).sendUserEventFromRequest(request, {
-            action: ApplicationEventName.FOLDER_CREATED,
-            data: {
-                folder: createdFolder,
-            },
-        })
+
         return createdFolder
     },
     )
@@ -48,12 +43,7 @@ const folderController: FastifyPluginAsyncTypebox = async (fastify) => {
                 request: request.body,
             })
 
-            eventsHooks.get(request.log).sendUserEventFromRequest(request, {
-                action: ApplicationEventName.FOLDER_UPDATED,
-                data: {
-                    folder: updatedFlow,
-                },
-            })
+
 
             return updatedFlow
         },
@@ -92,12 +82,7 @@ const folderController: FastifyPluginAsyncTypebox = async (fastify) => {
                 projectId: request.principal.projectId,
                 folderId: request.params.id,
             })
-            eventsHooks.get(request.log).sendUserEventFromRequest(request, {
-                action: ApplicationEventName.FOLDER_DELETED,
-                data: {
-                    folder,
-                },
-            })
+
             await folderService(request.log).delete({
                 projectId: request.principal.projectId,
                 folderId: request.params.id,

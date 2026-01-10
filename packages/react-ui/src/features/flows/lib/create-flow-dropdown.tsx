@@ -1,6 +1,6 @@
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { ChevronDown, Plus, Upload, Workflow } from 'lucide-react';
+import { ChevronDown, Plus, Sparkles, Upload, Workflow } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -30,6 +30,7 @@ import {
 
 import { ImportFlowDialog } from '../components/import-flow-dialog';
 import { SelectFlowTemplateDialog } from '../components/select-flow-template-dialog';
+import { GenerateFlowWithAIDialog } from '../components/generate-flow-with-ai-dialog';
 
 import { flowsApi } from './flows-api';
 
@@ -127,6 +128,16 @@ export const CreateFlowDropdown = ({
               <span>{t('Use a template')}</span>
             </DropdownMenuItem>
           </SelectFlowTemplateDialog>
+
+          <GenerateFlowWithAIDialog folderId={folderId}>
+            <DropdownMenuItem
+              onSelect={(e) => e.preventDefault()}
+              disabled={isCreateFlowPending}
+            >
+              <Sparkles className="h-4 w-4 me-2" />
+              <span>{t('Generate with AI')}</span>
+            </DropdownMenuItem>
+          </GenerateFlowWithAIDialog>
 
           {!embedState.hideExportAndImportFlow && (
             <ImportFlowDialog

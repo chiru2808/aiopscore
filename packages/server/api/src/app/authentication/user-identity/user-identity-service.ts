@@ -1,4 +1,5 @@
 import { ActivepiecesError, apId, ErrorCode, isNil, UserIdentity } from '@activepieces/shared'
+import { EntityManager } from 'typeorm'
 import { FastifyBaseLogger } from 'fastify'
 import { nanoid } from 'nanoid'
 import { repoFactory } from '../../core/db/repo-factory'
@@ -8,14 +9,14 @@ import { UserIdentityEntity } from './user-identity-entity'
 export const userIdentityRepository = repoFactory(UserIdentityEntity)
 
 export const userIdentityService = (log: FastifyBaseLogger) => ({
-    async create(params: Pick<UserIdentity, 'email' | 'password' | 'firstName' | 'lastName' | 'trackEvents' | 'newsLetter' | 'provider' | 'verified'>): Promise<UserIdentity> {
+    async create(params: Pick<UserIdentity, 'email' | 'password' | 'firstName' | 'lastName' | 'trackEvents' | 'newsLetter' | 'provider' | 'verified'>, entityManager?: EntityManager): Promise<UserIdentity> {
         log.info({
             email: params.email,
         }, 'Creating user identity')
 
         const cleanedEmail = params.email.toLowerCase().trim()
         const hashedPassword = await passwordHasher.hash(params.password)
-        const userByEmail = await userIdentityRepository().findOne({ where: { email: cleanedEmail } })
+        const userByEmail = await userIdentityRepository(entityManager).findOne({ where: { email: cleanedEmail } })
         if (userByEmail) {
             throw new ActivepiecesError({
                 code: ErrorCode.EXISTING_USER,
@@ -39,7 +40,7 @@ export const userIdentityService = (log: FastifyBaseLogger) => ({
             newsLetter: params.newsLetter,
             tokenVersion: nanoid(),
         }
-        const identity = await userIdentityRepository().save(newUserIdentity)
+        const identity = await userIdentityRepository(entityManager).save(newUserIdentity)
         return identity
     },
     async verifyIdentityPassword(params: VerifyIdentityPasswordParams): Promise<UserIdentity> {
@@ -107,6 +108,25 @@ export const userIdentityService = (log: FastifyBaseLogger) => ({
             ...user,
             verified: true,
         })
+    },
+
+    async update(params: { id: string, password?: string, verified?: boolean, firstName?: string, lastName?: string }): Promise<UserIdentity> {
+        const updateData: Partial<UserIdentity> = {}
+        if (params.password) {
+            updateData.password = await passwordHasher.hash(params.password)
+            updateData.tokenVersion = nanoid()
+        }
+        if (params.verified !== undefined) {
+             updateData.verified = params.verified
+        }
+        if (params.firstName) updateData.firstName = params.firstName
+        if (params.lastName) updateData.lastName = params.lastName
+        
+        await userIdentityRepository().update(params.id, {
+            ...updateData,
+            updated: new Date().toISOString(),
+        })
+        return userIdentityRepository().findOneByOrFail({ id: params.id })
     },
 })
 

@@ -1,9 +1,10 @@
 import { api } from '@/lib/api';
 import {
   CreateOtpRequestBody,
-  ResetPasswordRequestBody,
+  ResetPasswordRequest,
+  ForgotPasswordRequest,
   VerifyEmailRequestBody,
-} from '@activepieces/ee-shared';
+} from '@activepieces/shared';
 import {
   AuthenticationResponse,
   ClaimTokenRequest,
@@ -45,13 +46,19 @@ export const authenticationApi = {
     );
   },
   sendOtpEmail(request: CreateOtpRequestBody) {
-    return api.post<void>('/v1/otp', request);
+    return api.post<void>('/v1/authentication/otp', request);
   },
-  resetPassword(request: ResetPasswordRequestBody) {
-    return api.post<void>('/v1/authn/local/reset-password', request);
+  resetPassword(request: ResetPasswordRequest) {
+    return api.post<void>('/v1/authentication/reset-password', request);
+  },
+  forgotPassword(request: ForgotPasswordRequest) {
+    return api.post<void>('/v1/authentication/forgot-password', request);
   },
   verifyEmail(request: VerifyEmailRequestBody) {
-    return api.post<UserIdentity>('/v1/authn/local/verify-email', request);
+    return api.post<UserIdentity>('/v1/authentication/verify-email', request);
+  },
+  resendVerificationEmail(email: string) {
+    return api.post<{ success: boolean }>('/v1/authentication/resend-verification', { email });
   },
   switchProject(request: SwitchProjectRequest) {
     return api.post<AuthenticationResponse>(

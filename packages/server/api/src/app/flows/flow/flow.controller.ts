@@ -1,5 +1,5 @@
 
-import { ApplicationEventName, GitPushOperationType } from '@activepieces/ee-shared'
+
 import {
     ActivepiecesError,
     ApId,
@@ -31,12 +31,13 @@ import dayjs from 'dayjs'
 import { StatusCodes } from 'http-status-codes'
 import { authenticationUtils } from '../../authentication/authentication-utils'
 import { entitiesMustBeOwnedByCurrentProject } from '../../authentication/authorization'
-import { assertUserHasPermissionToFlow } from '../../ee/authentication/project-role/rbac-middleware'
-import { platformPlanService } from '../../ee/platform/platform-plan/platform-plan.service'
-import { gitRepoService } from '../../ee/projects/project-release/git-sync/git-sync.service'
+
 import { eventsHooks } from '../../helper/application-events'
 import { migrateFlowVersionTemplate } from '../flow-version/migrations'
+import { aiFlowGeneratorService } from './ai-flow-generator.service'
 import { flowService } from './flow.service'
+import { ProjectMemberRole } from '@activepieces/shared'
+import { projectMemberService } from '../../project/project-member.service'
 
 const DEFAULT_PAGE_SIZE = 10
 
@@ -48,14 +49,35 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
             request: request.body,
         })
 
-        eventsHooks.get(request.log).sendUserEventFromRequest(request, {
-            action: ApplicationEventName.FLOW_CREATED,
-            data: {
-                flow: newFlow,
-            },
-        })
+
 
         return reply.status(StatusCodes.CREATED).send(newFlow)
+    })
+
+    app.post('/generate-with-ai', {
+        config: {
+            allowedPrincipals: [PrincipalType.USER] as const,
+            permission: Permission.WRITE_FLOW,
+        },
+        schema: {
+            tags: ['flows'],
+            description: 'Generate a flow using AI based on a description',
+            body: Type.Object({
+                description: Type.String({ minLength: 10, maxLength: 500 }),
+                folderId: Type.Optional(Type.String()),
+            }),
+            response: {
+                [StatusCodes.OK]: FlowTemplateWithoutProjectInformation,
+            },
+        },
+    }, async (request, reply) => {
+        const flowTemplate = await aiFlowGeneratorService.generate({
+            description: request.body.description,
+            platformId: request.principal.platform.id,
+            log: request.log,
+        })
+
+        return reply.status(StatusCodes.OK).send(flowTemplate)
     })
 
     app.post('/:id', {
@@ -84,29 +106,32 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
         },
     }, async (request) => {
         const userId = await authenticationUtils.extractUserIdFromPrincipal(request.principal)
-        await assertUserHasPermissionToFlow(request.principal, request.body.type, request.log)
+
 
         const flow = await flowService(request.log).getOnePopulatedOrThrow({
             id: request.params.id,
             projectId: request.principal.projectId,
         })
 
+        // RESTRICTION: Operators can ONLY change status (enable/disable), cannot edit/publish
+        const role = await projectMemberService.getRole({
+            projectId: request.principal.projectId,
+            userId: request.principal.id,
+        })
+        if (role === ProjectMemberRole.OPERATOR && request.body.type !== FlowOperationType.CHANGE_STATUS) {
+             throw new ActivepiecesError({
+                code: ErrorCode.AUTHORIZATION,
+                params: {
+                    message: 'Operators can only enable/disable flows, not edit them',
+                },
+            })
+        }
+
         const turnOnFlow = request.body.type === FlowOperationType.CHANGE_STATUS && request.body.request.status === FlowStatus.ENABLED
         const publishDisabledFlow = request.body.type === FlowOperationType.LOCK_AND_PUBLISH && flow.status === FlowStatus.DISABLED
-        if (turnOnFlow || publishDisabledFlow) {
-            await platformPlanService(request.log).checkActiveFlowsExceededLimit(
-                request.principal.platform.id,
-                PlatformUsageMetric.ACTIVE_FLOWS,
-            )
-        }
+
         await assertThatFlowIsNotBeingUsed(flow, userId)
-        eventsHooks.get(request.log).sendUserEventFromRequest(request, {
-            action: ApplicationEventName.FLOW_UPDATED,
-            data: {
-                request: request.body,
-                flowVersion: flow.version,
-            },
-        })
+
         const updatedFlow = await flowService(request.log).update({
             id: request.params.id,
             userId: request.principal.type === PrincipalType.SERVICE ? null : userId,
@@ -161,25 +186,26 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
             id: request.params.id,
             projectId: request.principal.projectId,
         })
-        await gitRepoService(request.log).onDeleted({
-            type: GitPushOperationType.DELETE_FLOW,
-            externalId: flow.externalId,
-            userId: request.principal.id,
+
+        // RESTRICTION: Operators cannot delete flows
+        const role = await projectMemberService.getRole({
             projectId: request.principal.projectId,
-            platformId: request.principal.platform.id,
-            log: request.log,
+            userId: request.principal.id,
         })
+        if (role === ProjectMemberRole.OPERATOR) {
+            throw new ActivepiecesError({
+                code: ErrorCode.AUTHORIZATION,
+                params: {
+                    message: 'Operators cannot delete flows',
+                },
+            })
+        }
+
         await flowService(request.log).delete({
             id: request.params.id,
             projectId: request.principal.projectId,
         })
-        eventsHooks.get(request.log).sendUserEventFromRequest(request, {
-            action: ApplicationEventName.FLOW_DELETED,
-            data: {
-                flow,
-                flowVersion: flow.version,
-            },
-        })
+
         return reply.status(StatusCodes.NO_CONTENT).send()
     })
 }

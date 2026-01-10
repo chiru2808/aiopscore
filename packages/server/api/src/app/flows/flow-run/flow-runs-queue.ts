@@ -5,7 +5,6 @@ import { BullMQOtel } from 'bullmq-otel'
 import { FastifyBaseLogger } from 'fastify'
 import { websocketService } from '../../core/websockets.service'
 import { distributedLock, distributedStore, redisConnections } from '../../database/redis-connections'
-import { domainHelper } from '../../ee/custom-domains/domain-helper'
 import { system } from '../../helper/system/system'
 import { projectService } from '../../project/project-service'
 import { flowService } from '../flow/flow.service'
@@ -85,16 +84,7 @@ export const runsMetadataQueue = (log: FastifyBaseLogger) => ({
                                 savedFlowRun = await flowRunRepo().save(runMetadata)
                             }
 
-                            const shouldMarkParentAsFailed = savedFlowRun.failParentOnFailure && !isNil(savedFlowRun.parentRunId) && ![FlowRunStatus.SUCCEEDED, FlowRunStatus.RUNNING, FlowRunStatus.PAUSED, FlowRunStatus.QUEUED].includes(savedFlowRun.status)
-                            if (shouldMarkParentAsFailed) {
-                                const platformId = await projectService.getPlatformId(savedFlowRun.projectId)
-                                await markParentRunAsFailed({
-                                    parentRunId: savedFlowRun.parentRunId!,
-                                    childRunId: savedFlowRun.id,
-                                    projectId: savedFlowRun.projectId,
-                                    platformId,
-                                })
-                            }
+
 
                             if (!isNil(runMetadata.requestId)) {
                                 await distributedStore.deleteKeyIfFieldValueMatches(key, 'requestId', runMetadata.requestId)
@@ -153,37 +143,4 @@ export const runsMetadataQueue = (log: FastifyBaseLogger) => ({
 
 })
 
-async function markParentRunAsFailed({
-    parentRunId,
-    childRunId,
-    projectId,
-    platformId,
-}: MarkParentRunAsFailedParams): Promise<void> {
-    const flowRun = await flowRunRepo().findOneByOrFail({
-        id: parentRunId,
-    })
 
-    if (flowRun.status === FlowRunStatus.CANCELED) {
-        return
-    }
-
-    const requestId = flowRun.pauseMetadata?.type === PauseType.WEBHOOK ? flowRun.pauseMetadata?.requestId : undefined
-    assertNotNullOrUndefined(requestId, 'Parent run has no request id')
-
-    const callbackUrl = await domainHelper.getApiUrlForWorker({ path: `/v1/flow-runs/${parentRunId}/requests/${requestId}`, platformId })
-    const childRunUrl = await domainHelper.getPublicUrl({ path: `/projects/${projectId}/runs/${childRunId}`, platformId })
-    await apAxios.post(callbackUrl, {
-        status: 'error',
-        data: {
-            message: 'Subflow execution failed',
-            link: childRunUrl,
-        },
-    })
-}
-
-type MarkParentRunAsFailedParams = {
-    parentRunId: string
-    childRunId: string
-    projectId: string
-    platformId: string
-}

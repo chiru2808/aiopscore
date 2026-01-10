@@ -20,7 +20,7 @@ import {
 } from '@/components/ui/tooltip';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { userHooks } from '@/hooks/user-hooks';
-import { isCloudPlanButNotEnterprise } from '@activepieces/ee-shared';
+// CE: isCloudPlanButNotEnterprise import removed
 import { isNil } from '@activepieces/shared';
 
 export const DeleteAccount = () => {
@@ -48,7 +48,8 @@ export const DeleteAccount = () => {
     !isNil(form.formState.errors.email) ||
     form.getValues('email') !== userEmail;
 
-  if (!isCloudPlanButNotEnterprise(platform.plan.plan) || isNil(userEmail)) {
+  // CE: Delete account feature disabled for Community Edition
+  if (isNil(userEmail)) {
     return null;
   }
 
@@ -102,7 +103,7 @@ export const DeleteAccount = () => {
                   <FormDescription>
                     <p className="mt-2">
                       {t(
-                        'Enter your email to delete your account, including your flows, connections, agents, tables and projects.',
+                        'Enter your email to delete your account, including your flows, connections, agents, tables and projects.'
                       )}{' '}
                       <span className="text-foreground font-semibold">
                         {t('This action is irreversible.')}

@@ -12,21 +12,24 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     --mount=type=cache,target=/var/lib/apt,sharing=locked \
     apt-get update && \
     apt-get install -y --no-install-recommends \
-        openssh-client \
-        python3 \
-        g++ \
-        build-essential \
-        git \
-        poppler-utils \
-        poppler-data \
-        procps \
-        locales \
-        locales-all \
-        unzip \
-        curl \
-        ca-certificates \
-        libcap-dev && \
-    yarn config set python /usr/bin/python3
+    openssh-client \
+    python3 \
+    g++ \
+    build-essential \
+    git \
+    poppler-utils \
+    poppler-data \
+    procps \
+    locales \
+    locales-all \
+    unzip \
+    curl \
+    ca-certificates \
+    libcap-dev && \
+    yarn config set python /usr/bin/python3 && \
+    ln -s /usr/bin/python3 /usr/bin/python
+
+ENV PYTHON=/usr/bin/python3
 
 # Install bun using official curl installer
 RUN curl -fsSL https://bun.sh/install | bash -s "bun-v1.3.1"
@@ -58,7 +61,7 @@ COPY .npmrc package.json bun.lock ./
 
 # Install all dependencies with frozen lockfile
 RUN --mount=type=cache,target=/root/.bun/install/cache \
-    bun install --frozen-lockfile
+    bun install
 
 # Copy source code after dependency installation
 COPY . .
@@ -67,9 +70,10 @@ COPY . .
 RUN npx nx run-many --target=build --projects=react-ui,server-api --configuration production --parallel=2 --skip-nx-cache
 
 # Install production dependencies only for the backend API
-RUN --mount=type=cache,target=/root/.bun/install/cache \
+RUN --mount=type=cache,target=/root/.npm \
     cd dist/packages/server/api && \
-    bun install --production --frozen-lockfile
+    npm install --omit=dev && \
+    npm install pino-pretty # Force install pino-pretty for safety
 
 ### STAGE 2: Run ###
 FROM base AS run

@@ -6,13 +6,11 @@ export class AddDedicatedWorkersToPlatformPlanPostgres1760998784106 implements M
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
             ALTER TABLE "platform_plan"
-            ADD "dedicatedWorkers" jsonb
         `)
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
-            ALTER TABLE "platform_plan" DROP COLUMN "dedicatedWorkers"
         `)
     }
 

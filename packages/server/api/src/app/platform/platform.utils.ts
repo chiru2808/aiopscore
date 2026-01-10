@@ -1,6 +1,5 @@
 import { ApEdition, isNil, PlatformId, PlatformWithoutSensitiveData, PrincipalType } from '@activepieces/shared'
 import { FastifyRequest } from 'fastify'
-import { customDomainService } from '../ee/custom-domains/custom-domain.service'
 import { system } from '../helper/system/system'
 import { platformService } from './platform.service'
 
@@ -16,8 +15,9 @@ export const platformUtils = {
         if (system.getEdition() === ApEdition.CLOUD) {
             return null
         }
-        const oldestPlatform = await platformService.getOldestPlatform()
-        return oldestPlatform?.id ?? null
+        // MULTI-TENANT: Return null for unauthenticated sign-ups
+        // This triggers automatic platform creation in authentication.service.ts
+        return null
     },
     isCustomerOnDedicatedDomain(platform: PlatformWithoutSensitiveData): boolean {
         const edition = system.getEdition()
@@ -34,8 +34,6 @@ const getPlatformIdForHostname = async (
     if (system.getEdition() === ApEdition.COMMUNITY) {
         return null
     }
-    const customDomain = await customDomainService.getOneByDomain({
-        domain: hostname,
-    })
-    return customDomain?.platformId ?? null
+    // CE: No custom domain support
+    return null
 }

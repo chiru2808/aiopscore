@@ -14,6 +14,11 @@ export const SignUpRequest = Type.Object({
     }),
     trackEvents: Type.Boolean(),
     newsLetter: Type.Boolean(),
+    companyName: Type.Optional(Type.String({
+        minLength: 1,
+        maxLength: 100,
+    })),
+    platformId: Type.Optional(ApId),
 })
 
 export type SignUpRequest = Static<typeof SignUpRequest>

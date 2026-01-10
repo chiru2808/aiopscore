@@ -20,6 +20,7 @@
         "bundle": true,
         "sourcemap": true,
         "generatePackageJson": true,
+        "external": ["pino-pretty", "sqlite3", "bcrypt", "isolated-vm", "ioredis"],
         "assets": [
           {
             "glob": "packages/server/api/README.md",

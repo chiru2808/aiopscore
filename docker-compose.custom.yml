@@ -1,0 +1,63 @@
+version: "3.8"
+
+services:
+  # --------------------------------------------------------------------------
+  # Database Service (PostgreSQL)
+  # --------------------------------------------------------------------------
+  postgres:
+    image: postgres:17.2
+    container_name: aiops_postgres_custom
+    restart: always
+    environment:
+      POSTGRES_DB: ${AP_POSTGRES_DATABASE}
+      POSTGRES_USER: ${AP_POSTGRES_USERNAME}
+      POSTGRES_PASSWORD: ${AP_POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${AP_POSTGRES_USERNAME}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # --------------------------------------------------------------------------
+  # Cache Service (Redis)
+  # --------------------------------------------------------------------------
+  redis:
+    image: redis:7-alpine
+    container_name: aiops_redis_custom
+    restart: always
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # --------------------------------------------------------------------------
+  # AIOps Core Service (Custom Build)
+  # --------------------------------------------------------------------------
+  aiops:
+    image: aiops:latest
+    container_name: aiops_platform_custom
+    restart: always
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "8081:80"
+    env_file: .env
+    volumes:
+      - aiops_data:/data
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+
+volumes:
+  postgres_data:
+  redis_data:
+  aiops_data:

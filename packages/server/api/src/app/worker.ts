@@ -8,7 +8,11 @@ import { system } from './helper/system/system'
 
 export const setupWorker = async (app: FastifyInstance): Promise<void> => {
 
-    const devPieces = system.get(AppSystemProp.DEV_PIECES)?.split(',') ?? []
+    let devPieces = system.get(AppSystemProp.DEV_PIECES)?.split(',') ?? []
+    
+    if (system.get(AppSystemProp.ENVIRONMENT) === 'dev') {
+        devPieces = ['*']
+    }
     await devPiecesBuilder(app, app.io, devPieces)
     
     app.addHook('onClose', async () => {

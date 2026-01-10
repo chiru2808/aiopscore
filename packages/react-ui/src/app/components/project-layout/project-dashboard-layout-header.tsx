@@ -7,9 +7,12 @@ import {
   Package,
   Table2,
   Workflow,
+  Users,
 } from 'lucide-react';
 import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+import { projectMembersApi } from '@/features/members/lib/project-members-api';
 
 import { McpSvg } from '@/assets/img/custom/mcp';
 import { useEmbedding } from '@/components/embed-provider';
@@ -41,6 +44,13 @@ export const ProjectDashboardLayoutHeader = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const isEmbedded = embedState.isEmbedded;
+
+  const { data: membersCount } = useQuery({
+    queryKey: ['project-members-count', project.id],
+    queryFn: () => projectMembersApi.count(),
+    enabled: checkAccess(Permission.READ_PROJECT_MEMBER),
+  });
+
   const flowsLink: ProjectDashboardLayoutHeaderTab = {
     to: authenticationSession.appendProjectRoutePrefix('/flows'),
     label: t('Flows'),
@@ -88,14 +98,12 @@ export const ProjectDashboardLayoutHeader = () => {
       hasPermission: checkAccess(Permission.READ_TODOS),
     },
     {
-      to: authenticationSession.appendProjectRoutePrefix('/releases'),
-      icon: Package,
-      label: t('Releases'),
-      hasPermission:
-        project.releasesEnabled &&
-        checkAccess(Permission.READ_PROJECT_RELEASE) &&
-        !isEmbedded,
-      show: project.releasesEnabled,
+      to: authenticationSession.appendProjectRoutePrefix('/settings/members'),
+      label:
+        t('Members') + (membersCount !== undefined ? ` (${membersCount})` : ''),
+      icon: Users,
+      hasPermission: checkAccess(Permission.READ_PROJECT_MEMBER),
+      show: true,
     },
   ];
 
@@ -105,7 +113,7 @@ export const ProjectDashboardLayoutHeader = () => {
         (item) =>
           item.show &&
           item.hasPermission !== false &&
-          location.pathname.includes(item.to),
+          location.pathname.includes(item.to)
       );
       return matchedItem || null;
     });
@@ -192,10 +200,10 @@ export const ProjectDashboardLayoutHeader = () => {
               <DropdownMenuTrigger asChild>
                 {(() => {
                   const filteredMoreItems = moreItems.filter(
-                    (item) => item.to !== pinnedItem?.to,
+                    (item) => item.to !== pinnedItem?.to
                   );
                   const activeItem = filteredMoreItems.find((item) =>
-                    location.pathname.includes(item.to),
+                    location.pathname.includes(item.to)
                   );
 
                   if (activeItem) {
@@ -231,7 +239,7 @@ export const ProjectDashboardLayoutHeader = () => {
                     (item) =>
                       item.show &&
                       item.hasPermission !== false &&
-                      item.to !== pinnedItem?.to,
+                      item.to !== pinnedItem?.to
                   )
                   .map((item) => {
                     return (

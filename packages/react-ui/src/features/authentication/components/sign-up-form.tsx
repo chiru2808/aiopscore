@@ -28,7 +28,7 @@ import { authenticationApi } from '@/lib/authentication-api';
 import { authenticationSession } from '@/lib/authentication-session';
 import { useRedirectAfterLogin } from '@/lib/navigation-utils';
 import { cn, formatUtils } from '@/lib/utils';
-import { OtpType } from '@activepieces/ee-shared';
+import { OtpType } from '@activepieces/shared';
 import {
   ApEdition,
   ApFlagId,
@@ -46,6 +46,7 @@ type SignUpSchema = {
   lastName: string;
   password: string;
   newsLetter: boolean;
+  companyName?: string;
 };
 
 const SignUpForm = ({
@@ -57,10 +58,10 @@ const SignUpForm = ({
 }) => {
   const [searchParams] = useSearchParams();
   const { data: termsOfServiceUrl } = flagsHooks.useFlag<string>(
-    ApFlagId.TERMS_OF_SERVICE_URL,
+    ApFlagId.TERMS_OF_SERVICE_URL
   );
   const { data: privacyPolicyUrl } = flagsHooks.useFlag<string>(
-    ApFlagId.PRIVACY_POLICY_URL,
+    ApFlagId.PRIVACY_POLICY_URL
   );
 
   const form = useForm<SignUpSchema>({
@@ -68,8 +69,10 @@ const SignUpForm = ({
       newsLetter: false,
       password: '',
       email: searchParams.get('email') || '',
+      companyName: searchParams.get('companyName') || '',
     },
   });
+
   const websiteName = flagsHooks.useWebsiteBranding()?.websiteName;
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
   const showNewsLetterCheckbox = useMemo(() => {
@@ -131,7 +134,7 @@ const SignUpForm = ({
           case ErrorCode.INVITATION_ONLY_SIGN_UP: {
             form.setError('root.serverError', {
               message: t(
-                'Sign up is restricted. You need an invitation to join. Please contact the administrator.',
+                'Sign up is restricted. You need an invitation to join. Please contact the administrator.'
               ),
             });
             break;
@@ -173,6 +176,7 @@ const SignUpForm = ({
       ...data,
       email: data.email.trim().toLowerCase(),
       trackEvents: true,
+      platformId: searchParams.get('platformId') || undefined,
     });
   };
 
@@ -236,6 +240,26 @@ const SignUpForm = ({
               )}
             />
           </div>
+          <FormField
+            control={form.control}
+            name="companyName"
+            render={({ field }) => (
+              <FormItem className="grid space-y-2">
+                <Label htmlFor="companyName">
+                  {t('Company Name')} ({t('Optional')})
+                </Label>
+                <Input
+                  {...field}
+                  id="companyName"
+                  type="text"
+                  placeholder={'Acme Inc.'}
+                  className="rounded-sm"
+                  data-testid="sign-up-company-name"
+                />
+                <FormMessage />
+              </FormItem>
+            )}
+          />
           <FormField
             control={form.control}
             name="email"
@@ -315,7 +339,7 @@ const SignUpForm = ({
                     ></Checkbox>
                   </FormControl>
                   <Label htmlFor="newsLetter">
-                    {t(`Receive updates and newsletters from activepieces`)}
+                    {t(`Receive updates and newsletters from AIOps`)}
                   </Label>
                   <FormMessage />
                 </FormItem>

@@ -5,10 +5,10 @@ import { ActivepiecesError, EnginePrincipal, ErrorCode, isNil, PlatformUsageMetr
 import proxy from '@fastify/http-proxy'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { FastifyRequest } from 'fastify'
-import { platformUsageService } from '../ee/platform/platform-usage-service'
-import { projectLimitsService } from '../ee/projects/project-plan/project-plan.service'
+// CE: No usage tracking or limits
 import { aiProviderController } from './ai-provider-controller'
 import { aiProviderService } from './ai-provider-service'
+
 import { StreamingParser, Usage } from './providers/types'
 
 export const aiProviderModule: FastifyPluginAsyncTypebox = async (app) => {
@@ -105,14 +105,15 @@ export const aiProviderModule: FastifyPluginAsyncTypebox = async (app) => {
                                     ...usage.metadata,
                                     ...buildAIUsageMetadata(request.headers),
                                 }
-                                await platformUsageService(app.log).increaseAiCreditUsage({
+                                // CE: No usage tracking
+                                app.log.info({
                                     projectId,
                                     platformId: principal!.platform.id,
                                     provider,
                                     model: usage.model,
                                     cost: usage.cost,
                                     metadata,
-                                })
+                                }, '[AIProvider] CE - usage tracking disabled')
                             }
                         }
                         catch (error) {
@@ -137,18 +138,6 @@ export const aiProviderModule: FastifyPluginAsyncTypebox = async (app) => {
             const provider = (request.params as { provider: string }).provider
             aiProviderService.validateRequest(provider, request)
 
-            const projectId = principal.projectId
-            const videoModelRequestCost = aiProviderService.getVideoModelCost({ provider, request })
-            const exceededLimit = await projectLimitsService(request.log).checkAICreditsExceededLimit({ projectId, requestCostBeforeFiring: videoModelRequestCost })
-            if (exceededLimit) {
-                throw new ActivepiecesError({
-                    code: ErrorCode.QUOTA_EXCEEDED,
-                    params: {
-                        metric: PlatformUsageMetric.AI_CREDITS,
-                    },
-                })
-            }
-           
             const userPlatformId = principal.platform.id
             const providerConfig = getProviderConfigOrThrow(provider)
 

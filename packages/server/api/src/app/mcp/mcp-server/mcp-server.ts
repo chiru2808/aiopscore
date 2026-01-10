@@ -15,7 +15,7 @@ import {
     McpTrigger,
     TelemetryEventName,
     WorkerJobType,
-} from '@activepieces/shared'       
+} from '@activepieces/shared'
 import { openai } from '@ai-sdk/openai'
 import { LanguageModelV2 } from '@ai-sdk/provider'
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
@@ -24,7 +24,6 @@ import { StatusCodes } from 'http-status-codes'
 import { EngineHelperResponse } from 'server-worker'
 import { z } from 'zod'
 import { accessTokenManager } from '../../authentication/lib/access-token-manager'
-import { domainHelper } from '../../ee/custom-domains/domain-helper'
 import { flowService } from '../../flows/flow/flow.service'
 import { telemetry } from '../../helper/telemetry.utils'
 import { pieceMetadataService } from '../../pieces/metadata/piece-metadata-service'
@@ -57,6 +56,9 @@ export async function createMcpServer({
             case McpToolType.FLOW: {
                 return addFlowToServer(server, tool, projectId, logger)
             }
+            default: {
+                return Promise.resolve()
+            }
         }
     })
     await Promise.all(addedToolPromise)
@@ -73,10 +75,7 @@ async function initializeOpenAIModel({
     mcpId: string
 }): Promise<LanguageModelV2> {
     const model = 'gpt-4.1'
-    const baseURL = await domainHelper.getPublicApiUrl({
-        path: '/v1/ai-providers/proxy/openai',
-        platformId,
-    })
+    const baseURL = '/v1/ai-providers/proxy/openai'
 
     const engineToken = await accessTokenManager.generateEngineToken({
         platformId,
@@ -136,9 +135,9 @@ async function addPieceToServer(
                     projectId,
                     mcpId: mcpTool.mcpId,
                 })
-                
+
                 const auth = !isNil(toolPieceMetadata.connectionExternalId) ? `{{connections['${toolPieceMetadata.connectionExternalId}']}}` : undefined
-                
+
                 const parsedInputs = await toolInputsResolver.resolve({
                     auth,
                     userInstructions: params.instructions,

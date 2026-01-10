@@ -11,6 +11,7 @@ export class PrincipalTypeAuthzHandler extends BaseSecurityHandler {
         '/favicon.ico',
         '/v1/docs',
         '/redirect',
+        '/v1/billing/webhook',
     ]
     protected canHandle(request: FastifyRequest): Promise<boolean> {
         const routerPath = request.routeOptions.url

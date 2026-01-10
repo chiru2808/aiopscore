@@ -24,9 +24,8 @@ import {
   ActivepiecesClientEventName,
   ActivepiecesClientInit,
   ActivepiecesVendorEventName,
-  ActivepiecesVendorInit,
   ActivepiecesVendorRouteChanged,
-} from 'ee-embed-sdk';
+} from '@activepieces/shared';
 
 const notifyVendorPostAuthentication = () => {
   const authenticationSuccessEvent: ActivepiecesClientAuthenticationSuccess = {
@@ -43,7 +42,7 @@ const notifyVendorPostAuthentication = () => {
 
 const handleVendorNavigation = ({ projectId }: { projectId: string }) => {
   const handleVendorRouteChange = (
-    event: MessageEvent<ActivepiecesVendorRouteChanged>,
+    event: MessageEvent<ActivepiecesVendorRouteChanged>
   ) => {
     if (
       event.source === parentWindow &&
@@ -51,7 +50,7 @@ const handleVendorNavigation = ({ projectId }: { projectId: string }) => {
     ) {
       const targetRoute = event.data.data.vendorRoute;
       const targetRouteRequiresProjectId = Object.values(
-        routesThatRequireProjectId,
+        routesThatRequireProjectId
       ).some((route) => targetRoute.includes(route));
       if (!targetRouteRequiresProjectId) {
         memoryRouter.navigate(targetRoute);
@@ -60,7 +59,7 @@ const handleVendorNavigation = ({ projectId }: { projectId: string }) => {
           combinePaths({
             secondPath: targetRoute,
             firstPath: `/projects/${projectId}`,
-          }),
+          })
         );
       }
     }
@@ -72,7 +71,7 @@ const handleClientNavigation = () => {
   memoryRouter.subscribe((state) => {
     const pathNameWithoutProjectOrProjectId = state.location.pathname.replace(
       /\/projects\/[^/]+/,
-      '',
+      ''
     );
     parentWindow.postMessage(
       {
@@ -81,7 +80,7 @@ const handleClientNavigation = () => {
           route: pathNameWithoutProjectOrProjectId + state.location.search,
         },
       },
-      '*',
+      '*'
     );
   });
 };
@@ -171,7 +170,7 @@ const EmbedPage = React.memo(() => {
               };
               parentWindow.postMessage(errorEvent, '*');
             },
-          },
+          }
         );
       } else {
         console.error('Token sent via the sdk is empty');

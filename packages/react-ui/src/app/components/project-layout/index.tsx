@@ -6,7 +6,7 @@ import { Navigate, useLocation } from 'react-router-dom';
 import { useEmbedding } from '@/components/embed-provider';
 import { Separator } from '@/components/ui/separator';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar-shadcn';
-import { PurchaseExtraFlowsDialog } from '@/features/billing/components/active-flows-addon/purchase-active-flows-dialog';
+
 import { projectHooks } from '@/hooks/project-hooks';
 import { isNil } from '@activepieces/shared';
 
@@ -78,8 +78,6 @@ export function ProjectDashboardLayout({
           </div>
         </SidebarInset>
       </SidebarProvider>
-
-      <PurchaseExtraFlowsDialog />
     </ProjectChangedRedirector>
   );
 }

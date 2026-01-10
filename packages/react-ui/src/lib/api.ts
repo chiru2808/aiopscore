@@ -16,6 +16,19 @@ export const API_BASE_URL =
     : window.location.origin;
 export const API_URL = `${API_BASE_URL}/api`;
 
+import axiosRetry from 'axios-retry';
+
+axiosRetry(axios, {
+  retries: 3,
+  retryDelay: axiosRetry.exponentialDelay,
+  retryCondition: (error) => {
+    return (
+      axiosRetry.isNetworkOrIdempotentRequestError(error) ||
+      error.code === 'ECONNREFUSED'
+    );
+  },
+});
+
 const disallowedRoutes = [
   '/v1/managed-authn/external-token',
   '/v1/authentication/sign-in',

@@ -54,6 +54,9 @@ export const ProjectPlan = Type.Object({
     piecesFilterType: Type.Enum(PiecesFilterType),
     pieces: Type.Array(Type.String()),
     aiCredits: Nullable(Type.Number()),
+    stripeCustomerId: Type.Optional(Type.String()),
+    stripeSubscriptionId: Type.Optional(Type.String()),
+    subscriptionStartDatetime: Type.Optional(Type.String()),
 })
 
 export type ProjectPlan = Static<typeof ProjectPlan>

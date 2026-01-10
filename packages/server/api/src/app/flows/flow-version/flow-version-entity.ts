@@ -32,12 +32,14 @@ export const FlowVersionEntity = new EntitySchema<FlowVersionSchema>({
         connectionIds: {
             type: ARRAY_COLUMN_TYPE,
             array: isPostgres(),
-            nullable: false,
+            nullable: true,
+            default: [],
         },
         agentIds: {
             type: ARRAY_COLUMN_TYPE,
             array: isPostgres(),
-            nullable: false,
+            nullable: true,
+            default: [],
         },
         updatedBy: {
             type: String,

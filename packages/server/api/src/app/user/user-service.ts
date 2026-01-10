@@ -15,10 +15,9 @@ import {
     UserStatus,
     UserWithMetaInformation } from '@activepieces/shared'
 import dayjs from 'dayjs'
-import { In } from 'typeorm'
+import { EntityManager, In } from 'typeorm'
 import { userIdentityService } from '../authentication/user-identity/user-identity-service'
 import { repoFactory } from '../core/db/repo-factory'
-import { projectMemberRepo } from '../ee/projects/project-role/project-role.service'
 import { buildPaginator } from '../helper/pagination/build-paginator'
 import { paginationHelper } from '../helper/pagination/pagination-utils'
 import { system } from '../helper/system/system'
@@ -29,7 +28,7 @@ import { UserEntity, UserSchema } from './user-entity'
 export const userRepo = repoFactory(UserEntity)
 
 export const userService = {
-    async create(params: CreateParams): Promise<User> {
+    async create(params: CreateParams, entityManager?: EntityManager): Promise<User> {
         const user: NewUser = {
             id: apId(),
             identityId: params.identityId,
@@ -38,7 +37,7 @@ export const userService = {
             externalId: params.externalId,
             platformId: params.platformId,
         }
-        return userRepo().save(user)
+        return userRepo(entityManager).save(user)
     },
     async update({ id, status, platformId, platformRole, externalId }: UpdateParams): Promise<UserWithMetaInformation> {
         const user = await this.getOrThrow({ id })
@@ -159,12 +158,16 @@ export const userService = {
     async addOwnerToPlatform({
         id,
         platformId,
-    }: UpdatePlatformIdParams): Promise<void> {
-        await userRepo().update(id, {
+    }: UpdatePlatformIdParams, entityManager?: EntityManager): Promise<void> {
+        await userRepo(entityManager).update(id, {
             updated: dayjs().toISOString(),
             platformRole: PlatformRole.ADMIN,
             platformId,
         })
+    },
+
+    async countByPlatform({ platformId }: { platformId: PlatformId }): Promise<number> {
+        return userRepo().countBy({ platformId })
     },
 }
 
@@ -175,8 +178,8 @@ async function getUsersForProject(platformId: PlatformId, projectId: string) {
     if (edition === ApEdition.COMMUNITY) {
         return platformAdmins
     }
-    const projectMembers = await projectMemberRepo().find({ where: { projectId, platformId } }).then((members) => members.map((member) => member.userId))
-    return [...platformAdmins, ...projectMembers]
+    // CE: Return only platform admins
+    return platformAdmins
 }
 
 type ListUsersForProjectParams = {

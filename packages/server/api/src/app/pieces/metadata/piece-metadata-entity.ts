@@ -28,6 +28,7 @@ export const PieceMetadataEntity =
               type: ARRAY_COLUMN_TYPE,
               nullable: false,
               array: isPostgres(),
+              default: [],
           },
           displayName: {
               type: String,
@@ -85,6 +86,7 @@ export const PieceMetadataEntity =
               type: ARRAY_COLUMN_TYPE,
               nullable: true,
               array: isPostgres(),
+              default: [],
           },
           packageType: {
               type: String,

@@ -28,7 +28,7 @@ export const UserInvitation = Type.Object({
 export type UserInvitation = Static<typeof UserInvitation>
 
 export const UserInvitationWithLink = Type.Composite([UserInvitation, Type.Object({
-    link: Type.Optional(Type.String()),
+    link: Type.String(),
 })])
 
 export type UserInvitationWithLink = Static<typeof UserInvitationWithLink>

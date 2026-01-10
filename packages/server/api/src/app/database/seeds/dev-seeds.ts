@@ -44,6 +44,7 @@ const seedDevUser = async (): Promise<void> => {
         platformId: null,
         newsLetter: false,
         provider: UserIdentityProvider.EMAIL,
+        verified: true,
     })
 
     log.info({ name: 'seedDevUser' }, `email=${DEV_EMAIL} pass=${DEV_PASSWORD}`)

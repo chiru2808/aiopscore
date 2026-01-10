@@ -57,14 +57,14 @@ export const RequestTrial = ({
 
   const handleClick = () =>
     window.open(
-      `https://www.activepieces.com/sales?${createQueryParams()}`,
+      `mailto:support@aiops.com?subject=AIOps Support Request - ${featureKey}`,
       '_blank',
-      'noopener noreferrer',
+      'noopener noreferrer'
     );
 
   return (
     <Button variant={buttonVariant} onClick={handleClick}>
-      {t('Contact Sales')}
+      {t('Contact Support')}
     </Button>
   );
 };

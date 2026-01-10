@@ -4,7 +4,11 @@ import { Link } from 'react-router-dom';
 
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
-import { ActivepiecesClientEventName } from 'ee-embed-sdk';
+
+// CE: Replace EE embed SDK with local constant
+const AIOpsClientEventName = {
+  CLIENT_BUILDER_HOME_BUTTON_CLICKED: 'CLIENT_BUILDER_HOME_BUTTON_CLICKED',
+} as const;
 
 import { useEmbedding } from '../embed-provider';
 
@@ -17,12 +21,12 @@ const HomeButtonWrapper = ({ children }: { children: React.ReactNode }) => {
     const handleClick = () => {
       window.parent.postMessage(
         {
-          type: ActivepiecesClientEventName.CLIENT_BUILDER_HOME_BUTTON_CLICKED,
+          type: AIOpsClientEventName.CLIENT_BUILDER_HOME_BUTTON_CLICKED,
           data: {
             route: '/flows',
           },
         },
-        '*',
+        '*'
       );
     };
     return <div onClick={handleClick}>{children}</div>;

@@ -16,7 +16,7 @@ import { authenticationApi } from '@/lib/authentication-api';
 import { authenticationSession } from '@/lib/authentication-session';
 import { useRedirectAfterLogin } from '@/lib/navigation-utils';
 import { formatUtils } from '@/lib/utils';
-import { OtpType } from '@activepieces/ee-shared';
+import { OtpType } from '@activepieces/shared';
 import {
   ApEdition,
   ApFlagId,
@@ -81,7 +81,9 @@ const SignInForm: React.FC = () => {
         switch (errorCode) {
           case ErrorCode.INVALID_CREDENTIALS: {
             form.setError('root.serverError', {
-              message: t('Invalid email or password'),
+              message: t(
+                'Invalid email or password. Please check your credentials and try again.'
+              ),
             });
             break;
           }
@@ -92,6 +94,11 @@ const SignInForm: React.FC = () => {
             break;
           }
           case ErrorCode.EMAIL_IS_NOT_VERIFIED: {
+            form.setError('root.serverError', {
+              message: t(
+                'Your email is not verified. Please check your inbox or click the resend link below.'
+              ),
+            });
             setShowCheckYourEmailNote(true);
             break;
           }
@@ -123,10 +130,6 @@ const SignInForm: React.FC = () => {
     });
     mutate(data);
   };
-
-  if (!userCreated) {
-    return <Navigate to="/sign-up" />;
-  }
 
   return (
     <>
@@ -163,14 +166,12 @@ const SignInForm: React.FC = () => {
               <FormItem className="grid space-y-2">
                 <div className="flex items-center justify-between">
                   <Label htmlFor="password">{t('Password')}</Label>
-                  {edition !== ApEdition.COMMUNITY && (
-                    <Link
-                      to="/forget-password"
-                      className="text-muted-foreground text-sm hover:text-primary transition-all duration-200"
-                    >
-                      {t('Forgot your password?')}
-                    </Link>
-                  )}
+                  <Link
+                    to="/forget-password"
+                    className="text-muted-foreground text-sm hover:text-primary transition-all duration-200"
+                  >
+                    {t('Forgot your password?')}
+                  </Link>
                 </div>
                 <Input
                   {...field}
@@ -205,7 +206,7 @@ const SignInForm: React.FC = () => {
       {showCheckYourEmailNote && (
         <div className="mt-4">
           <CheckEmailNote
-            email={form.getValues().email}
+            email={form.getValues('email')}
             type={OtpType.EMAIL_VERIFICATION}
           />
         </div>

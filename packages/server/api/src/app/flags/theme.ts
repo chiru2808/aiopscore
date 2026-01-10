@@ -64,9 +64,10 @@ export function generateTheme({
 }
 
 export const defaultTheme = generateTheme({
-    primaryColor: '#6e41e2',
-    websiteName: 'Activepieces',
-    fullLogoUrl: 'https://cdn.activepieces.com/brand/full-logo.png',
-    favIconUrl: 'https://cdn.activepieces.com/brand/favicon.ico',
-    logoIconUrl: 'https://cdn.activepieces.com/brand/logo.svg',
+    primaryColor: '#0066FF',
+    websiteName: 'AIOps',
+    fullLogoUrl: '/aiops-logo-white.png',
+    favIconUrl: '/aiops-logo-white.png',
+    logoIconUrl: '/aiops-logo-white.png',
 })
+

@@ -36,8 +36,9 @@ import {
 } from '@/components/ui/tooltip';
 import { toast } from '@/components/ui/use-toast';
 import { PlatformRoleSelect } from '@/features/members/component/platform-role-select';
+import { projectMembersApi } from '../lib/project-members-api';
 import { userInvitationApi } from '@/features/members/lib/user-invitation';
-import { projectRoleApi } from '@/features/platform-admin/lib/project-role-api';
+
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
@@ -45,6 +46,7 @@ import { userHooks } from '@/hooks/user-hooks';
 import { HttpError } from '@/lib/api';
 import { formatUtils } from '@/lib/utils';
 import {
+  DefaultProjectRole,
   InvitationType,
   isNil,
   Permission,
@@ -70,7 +72,7 @@ const FormSchema = Type.Object({
   projectRole: Type.Optional(
     Type.String({
       required: true,
-    }),
+    })
   ),
 });
 
@@ -91,7 +93,7 @@ export const InviteUserDialog = ({
   const { data: currentUser } = userHooks.useCurrentUser();
   const { checkAccess } = useAuthorization();
   const userHasPermissionToInviteUser = checkAccess(
-    Permission.WRITE_INVITATION,
+    Permission.WRITE_INVITATION
   );
 
   const { mutate, isPending } = useMutation<
@@ -108,11 +110,9 @@ export const InviteUserDialog = ({
             platformRole: data.platformRole,
           });
         case InvitationType.PROJECT:
-          return userInvitationApi.invite({
+          return projectMembersApi.invite({
             email: data.email.trim().toLowerCase(),
-            type: data.type,
-            projectRole: data.projectRole!,
-            projectId: project.id,
+            role: data.projectRole!,
           });
       }
     },
@@ -132,7 +132,7 @@ export const InviteUserDialog = ({
 
   const { data: rolesData } = useQuery({
     queryKey: ['project-roles'],
-    queryFn: () => projectRoleApi.list(),
+    queryFn: () => Promise.resolve({ data: [] as any[] }),
     enabled:
       !isNil(platform.plan.projectRolesEnabled) &&
       platform.plan.projectRolesEnabled,
@@ -148,7 +148,7 @@ export const InviteUserDialog = ({
         ? InvitationType.PROJECT
         : InvitationType.PLATFORM,
       platformRole: PlatformRole.ADMIN,
-      projectRole: roles?.[0]?.name,
+      projectRole: DefaultProjectRole.VIEWER, // Set a default project role from hardcoded options
     },
   });
 
@@ -196,10 +196,10 @@ export const InviteUserDialog = ({
               <DialogDescription>
                 {invitationLink
                   ? t(
-                      'Please copy the link below and share it with the user you want to invite, the invitation expires in 24 hours.',
+                      'Please copy the link below and share it with the user you want to invite, the invitation expires in 24 hours.'
                     )
                   : t(
-                      'Type the email address of the user you want to invite, the invitation expires in 24 hours.',
+                      'Type the email address of the user you want to invite, the invitation expires in 24 hours.'
                     )}
               </DialogDescription>
             </DialogHeader>
@@ -273,10 +273,8 @@ export const InviteUserDialog = ({
                           <Label>{t('Select Project Role')}</Label>
                           <Select
                             onValueChange={(value) => {
-                              const selectedRole = roles.find(
-                                (role) => role.name === value,
-                              );
-                              field.onChange(selectedRole?.name);
+                              // No need to find role by name, value is already the role
+                              field.onChange(value);
                             }}
                             defaultValue={field.value}
                           >
@@ -286,11 +284,13 @@ export const InviteUserDialog = ({
                             <SelectContent>
                               <SelectGroup>
                                 <SelectLabel>{t('Roles')}</SelectLabel>
-                                {roles.map((role) => (
-                                  <SelectItem key={role.name} value={role.name}>
-                                    {role.name}
-                                  </SelectItem>
-                                ))}
+                                {Object.values(DefaultProjectRole).map(
+                                  (role) => (
+                                    <SelectItem key={role} value={role}>
+                                      {t(role)}
+                                    </SelectItem>
+                                  )
+                                )}
                               </SelectGroup>
                             </SelectContent>
                           </Select>

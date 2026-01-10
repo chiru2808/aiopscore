@@ -16,14 +16,14 @@ import {
   ActivepiecesClientShowConnectionIframe,
   ActivepiecesNewConnectionDialogClosed,
   NEW_CONNECTION_QUERY_PARAMS,
-} from 'ee-embed-sdk';
+} from '@activepieces/shared';
 
 import { piecesHooks } from '../../../features/pieces/lib/pieces-hooks';
 import { CreateOrEditConnectionDialogContent } from '../../connections/create-edit-connection-dialog';
 
 const extractIdFromQueryParams = () => {
   const connectionName = new URLSearchParams(
-    memoryRouter.state.location.search,
+    memoryRouter.state.location.search
   ).get(NEW_CONNECTION_QUERY_PARAMS.connectionName);
   return isNil(connectionName) || connectionName.length === 0
     ? apId()
@@ -65,7 +65,7 @@ const EmbeddedConnectionDialogContent = ({
     name: pieceName ?? '',
   });
   const hideConnectionIframe = (
-    connection?: Pick<AppConnectionWithoutSensitiveData, 'id' | 'externalId'>,
+    connection?: Pick<AppConnectionWithoutSensitiveData, 'id' | 'externalId'>
   ) => {
     postMessageToParent({
       type: ActivepiecesClientEventName.CLIENT_NEW_CONNECTION_DIALOG_CLOSED,
@@ -84,7 +84,7 @@ const EmbeddedConnectionDialogContent = ({
     event:
       | ActivepiecesNewConnectionDialogClosed
       | ActivepiecesClientConnectionNameIsInvalid
-      | ActivepiecesClientConnectionPieceNotFound,
+      | ActivepiecesClientConnectionPieceNotFound
   ) => {
     parentWindow.postMessage(event, '*');
   };
@@ -131,7 +131,7 @@ const EmbeddedConnectionDialogContent = ({
           {
             '!bg-transparent !border-none focus:outline-none !border-transparent !shadow-none':
               isLoadingPiece,
-          },
+          }
         )}
         withCloseButton={!isLoadingPiece}
       >

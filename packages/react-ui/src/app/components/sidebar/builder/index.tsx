@@ -9,7 +9,7 @@ import {
   SidebarSeparator,
   useSidebar,
 } from '@/components/ui/sidebar-shadcn';
-import { PurchaseExtraFlowsDialog } from '@/features/billing/components/active-flows-addon/purchase-active-flows-dialog';
+
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { cn } from '@/lib/utils';
 import { ApEdition, ApFlagId } from '@activepieces/shared';
@@ -32,7 +32,7 @@ function BuilderSidebarContent() {
       className={cn(
         state === 'collapsed' ? 'cursor-nesw-resize' : '',
         'group',
-        'p-1',
+        'p-1'
       )}
     >
       <AppSidebarHeader />
@@ -60,10 +60,7 @@ export function BuilderNavigationSidebar({
     <AllowOnlyLoggedInUserOnlyGuard>
       <SidebarProvider keyForStateInLocalStorage="builder-sidebar">
         {!embedState.isEmbedded && <BuilderSidebarContent />}
-        <SidebarInset>
-          {children}
-          {edition === ApEdition.CLOUD && <PurchaseExtraFlowsDialog />}
-        </SidebarInset>
+        <SidebarInset>{children}</SidebarInset>
       </SidebarProvider>
     </AllowOnlyLoggedInUserOnlyGuard>
   );

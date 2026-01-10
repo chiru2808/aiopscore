@@ -28,7 +28,7 @@ export const flowsApi = {
   update(
     flowId: string,
     request: FlowOperationRequest,
-    showErrorToast = false,
+    showErrorToast = false
   ) {
     return api
       .post<PopulatedFlow>(`/v1/flows/${flowId}`, request)
@@ -41,7 +41,7 @@ export const flowsApi = {
             toast({
               title: t('Flow Is In Use'),
               description: t(
-                'Flow is being used by another user, please try again later.',
+                'Flow is being used by another user, please try again later.'
               ),
               duration: Infinity,
               action: (
@@ -68,21 +68,27 @@ export const flowsApi = {
   },
   get(
     flowId: string,
-    request?: GetFlowQueryParamsRequest,
+    request?: GetFlowQueryParamsRequest
   ): Promise<PopulatedFlow> {
     return api.get<PopulatedFlow>(`/v1/flows/${flowId}`, request);
   },
   listVersions(
     flowId: string,
-    request: ListFlowVersionRequest,
+    request: ListFlowVersionRequest
   ): Promise<SeekPage<FlowVersionMetadata>> {
     return api.get<SeekPage<FlowVersion>>(
       `/v1/flows/${flowId}/versions`,
-      request,
+      request
     );
   },
   delete(flowId: string) {
     return api.delete<void>(`/v1/flows/${flowId}`);
+  },
+  async generateWithAI(params: {
+    description: string;
+    folderId?: string;
+  }): Promise<FlowTemplate> {
+    return api.post<FlowTemplate>('/v1/flows/generate-with-ai', params);
   },
   count() {
     return api.get<number>('/v1/flows/count');

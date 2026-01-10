@@ -4,7 +4,6 @@ import { ChevronsUpDown, LogOut, Shield, UserCogIcon } from 'lucide-react';
 import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
-import { notificationHooks } from '@/app/routes/platform/notifications/hooks/notifications-hooks';
 import { useEmbedding } from '@/components/embed-provider';
 import { useTelemetry } from '@/components/telemetry-provider';
 import { Dot } from '@/components/ui/dot';
@@ -158,7 +157,7 @@ function SidebarPlatformAdminButton() {
   const showPlatformAdminDashboard = useIsPlatformAdmin();
   const { embedState } = useEmbedding();
   const navigate = useNavigate();
-  const messages = notificationHooks.useNotifications();
+  const messages: unknown[] = [];
   const platformRole = userHooks.getCurrentUserPlatformRole();
 
   if (embedState.isEmbedded || !showPlatformAdminDashboard) {

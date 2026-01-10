@@ -17,7 +17,14 @@ import { StatusCodes } from 'http-status-codes'
 import { userService } from '../user-service'
 
 export const platformUserController: FastifyPluginAsyncTypebox = async (app) => {
+    
+    // GET /v1/users/me - Get current user profile
+    app.get('/me', GetCurrentUserRequest, async (req) => {
+        return userService.getMetaInformation({ id: req.principal.id })
+    })
 
+
+    // Existing endpoints below...
     app.get('/', ListUsersRequest, async (req) => {
         const platformId = req.principal.platform.id
         assertNotNullOrUndefined(platformId, 'platformId')
@@ -55,6 +62,17 @@ export const platformUserController: FastifyPluginAsyncTypebox = async (app) => 
         return res.status(StatusCodes.NO_CONTENT).send()
     })
 }
+
+const GetCurrentUserRequest = {
+    config: {
+        allowedPrincipals: [PrincipalType.USER] as const,
+    },
+    schema: {
+        tags: ['users'],
+        description: 'Get current user profile',
+    },
+}
+
 
 const ListUsersRequest = {
     schema: {

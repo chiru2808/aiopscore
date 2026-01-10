@@ -8,13 +8,11 @@ import { useEmbedding } from '@/components/embed-provider';
 import { Button } from '@/components/ui/button';
 import { BulkAction } from '@/components/ui/data-table';
 import { LoadingSpinner } from '@/components/ui/spinner';
-import { PublishedNeededTooltip } from '@/features/git-sync/components/published-tooltip';
-import { PushToGitDialog } from '@/features/git-sync/components/push-to-git-dialog';
-import { gitSyncHooks } from '@/features/git-sync/lib/git-sync-hooks';
+
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
-import { GitBranchType } from '@activepieces/ee-shared';
+import { GitBranchType } from '@activepieces/shared';
 import {
   FlowVersionState,
   Permission,
@@ -43,25 +41,22 @@ export const useFlowsBulkActions = ({
   folderId: string;
 }) => {
   const userHasPermissionToUpdateFlow = useAuthorization().checkAccess(
-    Permission.WRITE_FLOW,
+    Permission.WRITE_FLOW
   );
   const userHasPermissionToWriteFolder = useAuthorization().checkAccess(
-    Permission.WRITE_FOLDER,
+    Permission.WRITE_FOLDER
   );
   const userHasPermissionToWriteProjectRelease = useAuthorization().checkAccess(
-    Permission.WRITE_PROJECT_RELEASE,
+    Permission.WRITE_PROJECT_RELEASE
   );
   const allowPush = selectedRows.every(
     (flow) =>
       flow.publishedVersionId !== null &&
-      flow.version.state === FlowVersionState.LOCKED,
+      flow.version.state === FlowVersionState.LOCKED
   );
   const { embedState } = useEmbedding();
   const { platform } = platformHooks.useCurrentPlatform();
-  const { gitSync } = gitSyncHooks.useGitSync(
-    authenticationSession.getProjectId()!,
-    platform.plan.environmentsEnabled,
-  );
+  const gitSync: any = null;
   const isDevelopmentBranch =
     gitSync && gitSync.branchType === GitBranchType.DEVELOPMENT;
   const { mutate: exportFlows, isPending: isExportPending } =
@@ -78,23 +73,6 @@ export const useFlowsBulkActions = ({
               className="flex gap-2 items-center"
               onClick={(e) => e.stopPropagation()}
             >
-              {userHasPermissionToWriteProjectRelease &&
-                allowPush &&
-                selectedRows.length > 0 && (
-                  <PermissionNeededTooltip
-                    hasPermission={userHasPermissionToWriteProjectRelease}
-                  >
-                    <PublishedNeededTooltip allowPush={allowPush}>
-                      <PushToGitDialog type="flow" flows={selectedRows}>
-                        <Button variant="outline">
-                          <UploadCloud className="h-4 w-4 mr-2" />
-                          {t('Push to Git')}
-                        </Button>
-                      </PushToGitDialog>
-                    </PublishedNeededTooltip>
-                  </PermissionNeededTooltip>
-                )}
-
               {showMoveFlow && selectedRows.length > 0 && (
                 <PermissionNeededTooltip
                   hasPermission={
@@ -147,13 +125,13 @@ export const useFlowsBulkActions = ({
                       <>
                         <div>
                           {t(
-                            'Are you sure you want to delete these flows? This will permanently delete the flows, all their data and any background runs.',
+                            'Are you sure you want to delete these flows? This will permanently delete the flows, all their data and any background runs.'
                           )}
                         </div>
                         {isDevelopmentBranch && (
                           <div className="font-bold mt-2">
                             {t(
-                              'You are on a development branch, this will not delete the flows from the remote repository.',
+                              'You are on a development branch, this will not delete the flows from the remote repository.'
                             )}
                           </div>
                         )}
@@ -161,7 +139,7 @@ export const useFlowsBulkActions = ({
                     }
                     mutationFn={async () => {
                       await Promise.all(
-                        selectedRows.map((flow) => flowsApi.delete(flow.id)),
+                        selectedRows.map((flow) => flowsApi.delete(flow.id))
                       );
                       setRefresh(refresh + 1);
                       resetSelection();

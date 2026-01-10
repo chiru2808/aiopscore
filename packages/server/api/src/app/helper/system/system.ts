@@ -81,7 +81,7 @@ export const system = {
                 username: lokiUsername,
             }, {
                 token: hyperdxToken,
-            })
+            }) as unknown as FastifyBaseLogger
         }
         return globalLogger
     },

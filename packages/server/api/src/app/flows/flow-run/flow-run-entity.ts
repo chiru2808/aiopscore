@@ -53,6 +53,7 @@ export const FlowRunEntity = new EntitySchema<FlowRunSchema>({
             type: ARRAY_COLUMN_TYPE,
             array: isPostgres(),
             nullable: true,
+            default: [],
         },
         startTime: {
             type: TIMESTAMP_COLUMN_TYPE,

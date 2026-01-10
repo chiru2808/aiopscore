@@ -1,14 +1,14 @@
 import { AppSystemProp, apVersionUtil } from '@activepieces/server-shared'
 import { ProjectId, TelemetryEvent, User, UserId, UserIdentity } from '@activepieces/shared'
-import { Analytics } from '@segment/analytics-node'
 import { FastifyBaseLogger } from 'fastify'
 import { platformService } from '../platform/platform.service'
 import { projectService } from '../project/project-service'
 import { system } from './system/system'
 
-const telemetryEnabled = system.getBoolean(AppSystemProp.TELEMETRY_ENABLED)
+const telemetryEnabled = false // system.getBoolean(AppSystemProp.TELEMETRY_ENABLED)
 
-const analytics = new Analytics({ writeKey: '42TtMD2Fh9PEIcDO2CagCGFmtoPwOmqK' })
+// CE stub - no analytics
+const analytics = null
 
 export const telemetry = (log: FastifyBaseLogger) => ({
     async identify(user: User, identity: UserIdentity, projectId: ProjectId): Promise<void> {
@@ -26,7 +26,7 @@ export const telemetry = (log: FastifyBaseLogger) => ({
                 ...(await getMetadata()),
             },
         }
-        analytics.identify(identify)
+        // analytics.identify(user)ntify)
     },
     async trackPlatform(platformId: ProjectId, event: TelemetryEvent): Promise<void> {
         if (!telemetryEnabled) {
@@ -62,7 +62,7 @@ export const telemetry = (log: FastifyBaseLogger) => ({
             },
         }
         log.info(payloadEvent, '[Telemetry#trackUser] sending event')
-        analytics.track(payloadEvent)
+        // analytics.track(payloadEvent)
     },
 })
 

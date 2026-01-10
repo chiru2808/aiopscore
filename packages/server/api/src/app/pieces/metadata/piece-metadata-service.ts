@@ -3,6 +3,7 @@ import { AppSystemProp, filePiecesUtils } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     ApEdition,
+    ApEnvironment,
     apId,
     assertNotNullOrUndefined,
     ErrorCode,
@@ -28,7 +29,6 @@ import { FastifyBaseLogger } from 'fastify'
 import semVer from 'semver'
 import { EntityManager, IsNull } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
-import { enterpriseFilteringUtils } from '../../ee/pieces/filters/piece-filtering-utils'
 import { system } from '../../helper/system/system'
 import { pieceTagService } from '../tags/pieces/piece-tag.service'
 import { localPieceCache } from './local-piece-cache'
@@ -97,14 +97,7 @@ export const pieceMetadataService = (log: FastifyBaseLogger) => {
                 ))
                 return piece.name === name && strictlyLessThan
             })
-            const isFiltered = !isNil(piece) && await enterpriseFilteringUtils.isFiltered({
-                piece,
-                projectId,
-                platformId,
-            })
-            if (isFiltered) {
-                return undefined
-            }
+
             return piece
         },
         async getOrThrow({ projectId, version, name, platformId, locale }: GetOrThrowParams): Promise<PieceMetadataModel> {
@@ -269,11 +262,20 @@ export function toPieceMetadataModelSummary<T extends PieceMetadataSchema | Piec
 }
 
 const loadDevPiecesIfEnabled = async (log: FastifyBaseLogger): Promise<PieceMetadataSchema[]> => {
-    const devPiecesConfig = system.get(AppSystemProp.DEV_PIECES)
-    if (isNil(devPiecesConfig) || isEmpty(devPiecesConfig)) {
-        return []
+    const environment = system.get(AppSystemProp.ENVIRONMENT)
+    let packages: string[] = []
+    if (environment === ApEnvironment.DEVELOPMENT) {
+         packages = ['*']
     }
-    const packages = devPiecesConfig.split(',')
+    else {
+        const devPiecesConfig = system.get(AppSystemProp.DEV_PIECES)
+        if (isNil(devPiecesConfig) || isEmpty(devPiecesConfig)) {
+            packages = ['*']
+        }
+        else {
+            packages = devPiecesConfig.split(',')
+        }
+    }
     const pieces = await filePiecesUtils(packages, log).findAllPieces()
 
     return pieces.map((p): PieceMetadataSchema => ({

@@ -20,13 +20,12 @@ import { Label } from '@/components/ui/label';
 import { CheckEmailNote } from '@/features/authentication/components/check-email-note';
 import { HttpError } from '@/lib/api';
 import { authenticationApi } from '@/lib/authentication-api';
-import { CreateOtpRequestBody, OtpType } from '@activepieces/ee-shared';
+import { ForgotPasswordRequest, OtpType } from '@activepieces/shared';
 
 const FormSchema = Type.Object({
   email: Type.String({
     errorMessage: t('Please enter your email'),
   }),
-  type: Type.Enum(OtpType),
 });
 
 type FormSchema = Static<typeof FormSchema>;
@@ -35,21 +34,24 @@ const ResetPasswordForm = () => {
   const [isSent, setIsSent] = useState<boolean>(false);
   const form = useForm<FormSchema>({
     resolver: typeboxResolver(FormSchema),
-    defaultValues: {
-      type: OtpType.PASSWORD_RESET,
-    },
+    defaultValues: {},
   });
 
   const { mutate, isPending } = useMutation<
     void,
     HttpError,
-    CreateOtpRequestBody
+    ForgotPasswordRequest
   >({
-    mutationFn: authenticationApi.sendOtpEmail,
+    mutationFn: authenticationApi.forgotPassword,
     onSuccess: () => setIsSent(true),
+    onError: (error) => {
+      form.setError('root.serverError', {
+        message: t('Something went wrong, please try again later'),
+      });
+    },
   });
 
-  const onSubmit: SubmitHandler<CreateOtpRequestBody> = (data) => {
+  const onSubmit: SubmitHandler<ForgotPasswordRequest> = (data) => {
     mutate(data);
   };
 
@@ -68,7 +70,7 @@ const ResetPasswordForm = () => {
           ) : (
             <span>
               {t(
-                `If the user exists we'll send you an email with a link to reset your password.`,
+                `If an account exists for this email, we have sent a password reset link.`
               )}
             </span>
           )}
@@ -93,6 +95,11 @@ const ResetPasswordForm = () => {
                   </FormItem>
                 )}
               />
+              {form?.formState?.errors?.root?.serverError && (
+                <FormMessage>
+                  {form.formState.errors.root.serverError.message}
+                </FormMessage>
+              )}
               <Button
                 className="w-full mt-4"
                 loading={isPending}

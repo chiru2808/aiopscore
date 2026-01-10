@@ -25,10 +25,15 @@ import { UserAvatar } from '@/components/ui/user-avatar';
 import { projectMembersApi } from '@/features/members/lib/project-members-api';
 import { userInvitationApi } from '@/features/members/lib/user-invitation';
 import { projectRoleApi } from '@/features/platform-admin/lib/project-role-api';
+
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
-import { ProjectMemberWithUser } from '@activepieces/ee-shared';
-import { Permission, UserInvitation } from '@activepieces/shared';
+import { ProjectMemberWithUser } from '@activepieces/shared';
+import {
+  Permission,
+  ProjectMemberRole,
+  UserInvitation,
+} from '@activepieces/shared';
 
 export type MemberRowData =
   | {
@@ -70,7 +75,7 @@ const RoleCell = ({
     project.ownerId === row.original.data.userId;
 
   const { mutate } = useMutation({
-    mutationFn: (newRole: string) => {
+    mutationFn: (newRole: ProjectMemberRole) => {
       if (row.original.type === 'member') {
         return projectMembersApi.update(row.original.data.id, {
           role: newRole,
@@ -93,13 +98,13 @@ const RoleCell = ({
   });
 
   const handleValueChange = (value: string) => {
-    mutate(value);
+    mutate(value as ProjectMemberRole);
   };
 
   const roleName =
     row.original.type === 'member'
-      ? row.original.data.projectRole.name
-      : row.original.data.projectRole?.name ?? '';
+      ? row.original.data.role
+      : row.original.data.projectRoleId ?? '';
 
   if (isOwner) {
     return <span className="text-sm">{roleName}</span>;
@@ -131,33 +136,9 @@ const RoleCell = ({
   }
 
   return (
-    <PermissionNeededTooltip hasPermission={userHasPermissionToUpdateRole}>
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button
-            variant="outline"
-            className="w-[150px] justify-between"
-            disabled={!userHasPermissionToUpdateRole}
-          >
-            <span>{roleName}</span>
-            <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-[150px]">
-          {roles.map((role) => (
-            <DropdownMenuItem
-              key={role.name}
-              onClick={(e) => {
-                e.stopPropagation();
-                handleValueChange(role.name);
-              }}
-            >
-              {role.name}
-            </DropdownMenuItem>
-          ))}
-        </DropdownMenuContent>
-      </DropdownMenu>
-    </PermissionNeededTooltip>
+    <div className="w-[150px]">
+      <span className="text-sm">{roleName}</span>
+    </div>
   );
 };
 

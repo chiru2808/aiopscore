@@ -63,6 +63,10 @@ export const TemplateCard = ({
     },
   });
 
+  if (!template.template) {
+    return null;
+  }
+
   return (
     <div
       key={template.id}

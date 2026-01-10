@@ -1,4 +1,4 @@
-import { ApplicationEventName } from '@activepieces/ee-shared'
+
 import {
     FlowRun,
     isFlowRunStateTerminal,
@@ -16,29 +16,14 @@ export const flowRunSideEffects = (log: FastifyBaseLogger) => ({
             return
         }
         await flowRunHooks(log).onFinish(flowRun)
-        eventsHooks.get(log).sendWorkerEvent(flowRun.projectId, {
-            action: ApplicationEventName.FLOW_RUN_FINISHED,
-            data: {
-                flowRun,
-            },
-        })
+
     },
     async onResume(flowRun: FlowRun): Promise<void> {
-        eventsHooks.get(log).sendWorkerEvent(flowRun.projectId, {
-            action: ApplicationEventName.FLOW_RUN_RESUMED,
-            data: {
-                flowRun,
-            },
-        })
+
     },
     async onStart(flowRun: FlowRun): Promise<void> {
        
-        eventsHooks.get(log).sendWorkerEvent(flowRun.projectId, {
-            action: ApplicationEventName.FLOW_RUN_STARTED,
-            data: {
-                flowRun,
-            },
-        })
+
     },
 })
 

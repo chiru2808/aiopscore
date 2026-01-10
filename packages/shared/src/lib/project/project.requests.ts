@@ -10,3 +10,9 @@ export const ListProjectRequestForUserQueryParams = Type.Object({
 })
 
 export type ListProjectRequestForUserQueryParams = Static<typeof ListProjectRequestForUserQueryParams>
+
+export const CreateProjectRequest = Type.Object({
+    displayName: Type.String(),
+})
+
+export type CreateProjectRequest = Static<typeof CreateProjectRequest>

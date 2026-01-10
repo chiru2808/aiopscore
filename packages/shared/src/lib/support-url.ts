@@ -1,1 +1,1 @@
-export const supportUrl = 'https://community.activepieces.com'
+export const supportUrl = 'mailto:support@aiops.com'

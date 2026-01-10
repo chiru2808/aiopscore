@@ -18,9 +18,8 @@ export const appConnectionWorkerController: FastifyPluginAsyncTypebox = async (a
     app.get('/:externalId', GetAppConnectionRequest, async (request): Promise<AppConnection> => {
         const enginePrincipal = (request.principal as EnginePrincipal)
         assertNotNullOrUndefined(enginePrincipal.projectId, 'projectId')
-        const appConnection = await appConnectionService(request.log).getOne({
+        const appConnection = await appConnectionService.getOneByProjectIdAndExternalId({
             projectId: enginePrincipal.projectId,
-            platformId: enginePrincipal.platform.id,
             externalId: request.params.externalId,
         })
 

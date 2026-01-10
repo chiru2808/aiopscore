@@ -19,16 +19,21 @@ export const filePiecesUtils = (packages: string[], log: FastifyBaseLogger) => {
 
         const ignoredFiles = ['node_modules', 'dist', 'framework', 'common', 'common-ai']
         for (const file of files) {
-            const filePath = join(folderPath, file)
-            const fileStats = await stat(filePath)
-            if (
-                fileStats.isDirectory() &&
-                !ignoredFiles.includes(file)
-            ) {
-                paths.push(...(await findAllPiecesFolder(filePath)))
+            try {
+                const filePath = join(folderPath, file)
+                const fileStats = await stat(filePath)
+                if (
+                    fileStats.isDirectory() &&
+                    !ignoredFiles.includes(file)
+                ) {
+                    paths.push(...(await findAllPiecesFolder(filePath)))
+                }
+                else if (file === 'package.json') {
+                    paths.push(folderPath)
+                }
             }
-            else if (file === 'package.json') {
-                paths.push(folderPath)
+            catch (e) {
+                // Ignore missing files or errors (e.g. race condition with lock files)
             }
         }
         return paths
@@ -94,7 +99,7 @@ export const filePiecesUtils = (packages: string[], log: FastifyBaseLogger) => {
 
     async function loadPiecesFromFolder(folderPath: string): Promise<PieceMetadata[]> {
         try {
-            const paths = (await findAllPiecesFolder(folderPath)).filter(p => packages.some(packageName => p.includes(packageName)))
+            const paths = (await findAllPiecesFolder(folderPath)).filter(p => packages.includes('*') || packages.some(packageName => p.includes(packageName)))
             const pieces = await Promise.all(paths.map((p) => loadPieceFromFolder(p)))
             return pieces.filter((p): p is PieceMetadata => p !== null)
         }
@@ -176,5 +181,6 @@ export const filePiecesUtils = (packages: string[], log: FastifyBaseLogger) => {
         getPackageNameFromFolderPath,
         getProjectJsonFromFolderPath,
         getPieceDependencies,
+        findAllPiecesDirectoryInSource,
     }
 }

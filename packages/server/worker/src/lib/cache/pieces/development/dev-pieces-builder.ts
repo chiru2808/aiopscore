@@ -1,5 +1,5 @@
 import fs from 'fs/promises'
-import { resolve } from 'path'
+import { resolve, basename } from 'path'
 import { ApLock, filePiecesUtils, memoryLock, spawnWithKill } from '@activepieces/server-shared'
 import { debounce, isNil, WebsocketClientEvent } from '@activepieces/shared'
 import chalk from 'chalk'
@@ -83,6 +83,13 @@ async function handleFileChange(packages: string[], pieceName: string, packageNa
 }
 
 export async function devPiecesBuilder(app: FastifyInstance, io: Server, packages: string[]): Promise<void> {
+    if (packages.includes('*')) {
+        const allPaths = await filePiecesUtils(packages, app.log).findAllPiecesDirectoryInSource()
+        const EXCLUDED_PIECES = ['actualbudget']
+        packages = allPaths
+            .map(p => basename(p))
+            .filter(p => !EXCLUDED_PIECES.includes(p))
+    }
 
     const watchers: FSWatcher[] = []
   

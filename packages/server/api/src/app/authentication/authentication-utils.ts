@@ -1,5 +1,6 @@
 import { AppSystemProp } from '@activepieces/server-shared'
 import { ActivepiecesError, ApEdition, ApEnvironment, AuthenticationResponse, EnginePrincipal, ErrorCode, isNil, PrincipalType, Project, ServicePrincipal, TelemetryEventName, User, UserIdentity, UserIdentityProvider, UserPrincipal, UserStatus } from '@activepieces/shared'
+import { EntityManager } from 'typeorm'
 import { FastifyBaseLogger } from 'fastify'
 import { system } from '../helper/system/system'
 import { telemetry } from '../helper/telemetry.utils'
@@ -31,12 +32,14 @@ export const authenticationUtils = {
     },
 
     async getProjectAndToken(params: GetProjectAndTokenParams): Promise<AuthenticationResponse> {
-        const user = await userService.getOneOrFail({ id: params.userId })
-        const projects = await projectService.getAllForUser({
-            platformId: params.platformId,
-            userId: params.userId,
-        })
-        const project = isNil(params.projectId) ? projects?.[0] : projects.find((project) => project.id === params.projectId)
+        let project = params.project
+        if (isNil(project)) {
+            const projects = await projectService.getAllForUser({
+                platformId: params.platformId,
+                userId: params.user.id,
+            }, params.entityManager)
+            project = isNil(params.projectId) ? projects?.[0] : projects.find((project) => project.id === params.projectId)
+        }
         if (isNil(project)) {
             throw new ActivepiecesError({
                 code: ErrorCode.INVITATION_ONLY_SIGN_UP,
@@ -45,16 +48,9 @@ export const authenticationUtils = {
                 },
             })
         }
-        const identity = await userIdentityService(system.globalLogger()).getOneOrFail({ id: user.identityId })
-        if (!identity.verified) {
-            throw new ActivepiecesError({
-                code: ErrorCode.EMAIL_IS_NOT_VERIFIED,
-                params: {
-                    email: identity.email,
-                },
-            })
-        }
-        if (user.status === UserStatus.INACTIVE) {
+        const identity = params.identity
+
+        if (params.user.status === UserStatus.INACTIVE) {
             throw new ActivepiecesError({
                 code: ErrorCode.USER_IS_INACTIVE,
                 params: {
@@ -62,8 +58,16 @@ export const authenticationUtils = {
                 },
             })
         }
+        if (!identity.verified && !params.ignoreVerified) {
+             throw new ActivepiecesError({
+                 code: ErrorCode.EMAIL_IS_NOT_VERIFIED,
+                 params: {
+                     email: identity.email,
+                 },
+             })
+        }
         const token = await accessTokenManager.generateToken({
-            id: user.id,
+            id: params.user.id,
             type: PrincipalType.USER,
             projectId: project.id,
             platform: {
@@ -72,7 +76,7 @@ export const authenticationUtils = {
             tokenVersion: identity.tokenVersion,
         })
         return {
-            ...user,
+            ...params.user,
             firstName: identity.firstName,
             lastName: identity.lastName,
             email: identity.email,
@@ -159,13 +163,12 @@ export const authenticationUtils = {
         }
     },
 
-    async saveNewsLetterSubscriber(user: User, platformId: string, identity: UserIdentity, log: FastifyBaseLogger): Promise<void> {
-        const platform = await platformService.getOneWithPlanOrThrow(platformId)
+    async saveNewsLetterSubscriber(user: User, isEmbeddingEnabled: boolean, identity: UserIdentity, log: FastifyBaseLogger): Promise<void> {
         const environment = system.get(AppSystemProp.ENVIRONMENT)
         if (environment !== ApEnvironment.PRODUCTION) {
             return
         }
-        if (platform.plan.embeddingEnabled) {
+        if (isEmbeddingEnabled) {
             return
         }
         try {
@@ -179,7 +182,7 @@ export const authenticationUtils = {
                     body: JSON.stringify({ email: identity.email }),
                 },
             )
-            return await response.json()
+            await response.json()
         }
         catch (error) {
             log.warn(error)
@@ -220,7 +223,11 @@ type AssertUserIsInvitedToPlatformOrProjectParams = {
 }
 
 type GetProjectAndTokenParams = {
-    userId: string
+    user: User
+    identity: UserIdentity
     platformId: string
     projectId: string | null
+    project?: Project
+    entityManager?: EntityManager
+    ignoreVerified?: boolean
 }

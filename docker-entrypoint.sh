@@ -12,6 +12,12 @@ echo "AP_FAVICON_URL: $AP_FAVICON_URL"
 envsubst '${AP_APP_TITLE} ${AP_FAVICON_URL}' < /usr/share/nginx/html/index.html > /usr/share/nginx/html/index.html.tmp && \
 mv /usr/share/nginx/html/index.html.tmp /usr/share/nginx/html/index.html
 
+# Process environment variables in nginx.conf
+export PORT="${PORT:-8080}"
+envsubst '${PORT}' < /etc/nginx/nginx.conf > /etc/nginx/nginx.conf.tmp && \
+mv /etc/nginx/nginx.conf.tmp /etc/nginx/nginx.conf
+
+
 
 # Start Nginx server
 nginx -g "daemon off;" &
@@ -21,6 +27,12 @@ if [ "$AP_CONTAINER_TYPE" = "APP" ] && [ "$AP_PM2_ENABLED" = "true" ]; then
     echo "Starting backend server with PM2 (APP mode)"
     pm2-runtime start dist/packages/server/api/main.cjs --name "activepieces-app" --node-args="--enable-source-maps" -i 0
 else
-    echo "Starting backend server with Node.js (WORKER mode or default)"
-    node --enable-source-maps dist/packages/server/api/main.cjs
+    # Construct Redis URL if missing but Host/Port present
+    if [ -z "$AP_REDIS_URL" ] && [ -n "$AP_REDIS_HOST" ]; then
+        echo "DEBUG: Constructing AP_REDIS_URL from HOST/PORT..."
+        export AP_REDIS_URL="redis://${AP_REDIS_HOST}:${AP_REDIS_PORT:-6379}"
+    fi
+
+    echo "DEBUG: Starting Real Process..."
+    node --enable-source-maps --trace-warnings --trace-uncaught dist/packages/server/api/main.cjs
 fi

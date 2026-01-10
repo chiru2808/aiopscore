@@ -1,19 +1,8 @@
-import { useQuery } from '@tanstack/react-query';
-
-import { gitSyncApi } from './git-sync-api';
-
+// Stub hooks for git-sync feature
 export const gitSyncHooks = {
-  useGitSync: (projectId: string, enabled: boolean) => {
-    const query = useQuery({
-      queryKey: ['git-sync', projectId],
-      queryFn: () => gitSyncApi.get(projectId),
-      staleTime: Infinity,
-      enabled: enabled,
-    });
+  useGitSync: (projectId: string, environmentsEnabled: boolean) => {
     return {
-      gitSync: query.data,
-      isLoading: query.isLoading,
-      refetch: query.refetch,
+      gitSync: null,
     };
   },
 };

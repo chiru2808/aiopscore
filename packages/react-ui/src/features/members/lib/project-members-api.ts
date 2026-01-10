@@ -3,7 +3,7 @@ import {
   ListProjectMembersRequestQuery,
   ProjectMemberWithUser,
   UpdateProjectMemberRoleRequestBody,
-} from '@activepieces/ee-shared';
+} from '@activepieces/shared';
 import { SeekPage } from '@activepieces/shared';
 
 export const projectMembersApi = {
@@ -18,5 +18,11 @@ export const projectMembersApi = {
   },
   delete(id: string): Promise<void> {
     return api.delete<void>(`/v1/project-members/${id}`);
+  },
+  invite: (request: { email: string; role: string }) => {
+    return api.post<any>('/v1/project-members/invite', request);
+  },
+  count: () => {
+    return api.get<number>('/v1/project-members/count');
   },
 };

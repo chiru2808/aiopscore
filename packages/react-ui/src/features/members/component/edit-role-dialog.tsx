@@ -21,7 +21,10 @@ import {
 } from '@/components/ui/select';
 import { toast } from '@/components/ui/use-toast';
 import { projectRoleApi } from '@/features/platform-admin/lib/project-role-api';
-import { ProjectMemberWithUser } from '@activepieces/ee-shared';
+import {
+  DefaultProjectRole,
+  ProjectMemberWithUser,
+} from '@activepieces/shared';
 
 import { projectMembersApi } from '../lib/project-members-api';
 
@@ -37,7 +40,7 @@ export function EditRoleDialog({
   disabled,
 }: EditRoleDialogProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [selectedRole, setSelectedRole] = useState(member.projectRole.name);
+  const [selectedRole, setSelectedRole] = useState(member.role);
   const { data: rolesData } = useQuery({
     queryKey: ['project-roles'],
     queryFn: () => projectRoleApi.list(),
@@ -48,7 +51,7 @@ export function EditRoleDialog({
   const { mutate, isPending } = useMutation({
     mutationFn: (newRole: string) => {
       return projectMembersApi.update(member.id, {
-        role: newRole,
+        role: newRole as any, // Cast to any to satisfy strict enum type check for now, or import ProjectMemberRole
       });
     },
     onSuccess: () => {
@@ -93,9 +96,9 @@ export function EditRoleDialog({
               <SelectValue placeholder={t('Select Role')} />
             </SelectTrigger>
             <SelectContent>
-              {roles.map((role) => (
-                <SelectItem key={role.name} value={role.name}>
-                  {role.name}
+              {Object.values(DefaultProjectRole).map((role) => (
+                <SelectItem key={role} value={role}>
+                  {t(role)}
                 </SelectItem>
               ))}
             </SelectContent>

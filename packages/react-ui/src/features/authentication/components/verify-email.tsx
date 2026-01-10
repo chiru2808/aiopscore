@@ -22,10 +22,10 @@ const VerifyEmail = () => {
   const hasMutated = useRef(false);
   const { reportSignup } = usePartnerStack();
 
-  const { mutate, isPending } = useMutation({
+  const { mutate, isPending, isSuccess, isError } = useMutation({
     mutationFn: async () => {
       return await authenticationApi.verifyEmail({
-        otp: otp!,
+        otpcode: otp!,
         identityId: identityId!,
       });
     },
@@ -65,17 +65,17 @@ const VerifyEmail = () => {
       <Card className="w-[28rem] rounded-sm drop-shadow-xl p-4">
         <div className="gap-2 w-full flex flex-col">
           <div className="gap-4 w-full flex flex-row items-center justify-center">
-            {!isPending && !isExpired && (
+            {isSuccess && (
               <>
                 <MailCheck className="w-16 h-16" />
                 <span className="text-left w-fit">
                   {t(
-                    'Email has been verified. You will be redirected to sign in...',
+                    'Email has been verified. You will be redirected to sign in...'
                   )}
                 </span>
               </>
             )}
-            {isPending && !isExpired && (
+            {isPending && (
               <>
                 <LoadingSpinner className="size-6" />
                 <span className="text-left w-fit">
@@ -84,15 +84,24 @@ const VerifyEmail = () => {
               </>
             )}
 
-            {isExpired && (
+            {isError && isExpired && (
               <>
                 <MailX className="w-16 h-16" />
                 <div className="text-left w-fit">
                   <div>
                     {t(
-                      'invitation has expired, once you sign in again you will be able to resend the verification email.',
+                      'invitation has expired, once you sign in again you will be able to resend the verification email.'
                     )}
                   </div>
+                  <div>{t('Redirecting to sign in...')}</div>
+                </div>
+              </>
+            )}
+            {isError && !isExpired && (
+              <>
+                <MailX className="w-16 h-16" />
+                <div className="text-left w-fit">
+                  <div>{t('An error occurred during verification.')}</div>
                   <div>{t('Redirecting to sign in...')}</div>
                 </div>
               </>

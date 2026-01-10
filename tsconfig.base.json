@@ -20,9 +20,7 @@
       "@activepieces/common-ai": [
         "packages/pieces/community/common-ai/src/index.ts"
       ],
-      "@activepieces/ee-auth": ["packages/ee/auth/src/index.ts"],
-      "@activepieces/ee-shared": ["packages/ee/shared/src/index.ts"],
-      "@activepieces/ee/billing/ui": ["packages/ee/billing/ui/src/index.ts"],
+
       "@activepieces/engine": ["packages/engine/src/main.ts"],
       "@activepieces/pieces-common": [
         "packages/pieces/community/common/src/index.ts"
@@ -47,7 +45,7 @@
       ],
       "@activepieces/server-shared": ["packages/server/shared/src/index.ts"],
       "@activepieces/shared": ["packages/shared/src/index.ts"],
-      "@ee/*": ["packages/ee/*"],
+
       "Aminos": ["packages/pieces/community/Aminos/src/index.ts"],
       "activepieces/piece-microsoft-dynamics-365-business-central": [
         "packages/pieces/community/microsoft-dynamics-365-business-central/src/index.ts"
@@ -67,7 +65,7 @@
       "activepieces/piece-cashfree-payments": [
         "packages/pieces/community/cashfree-payments/src/index.ts"
       ],
-      "ee-embed-sdk": ["packages/ee/ui/embed-sdk/src/index.ts"],
+
       "server-worker": ["packages/server/worker/src/index.ts"],
       "ui-feature-forms": ["packages/ui/features-forms/src/index.ts"],
       "@activepieces/piece-kissflow": [

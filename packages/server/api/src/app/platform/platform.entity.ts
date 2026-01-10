@@ -53,32 +53,37 @@ export const PlatformEntity = new EntitySchema<PlatformSchema>({
         filteredPieceNames: {
             type: ARRAY_COLUMN_TYPE,
             array: isPostgres(),
-            nullable: false,
+            nullable: true,
+            default: [],
         },
         filteredPieceBehavior: {
             type: String,
             enum: FilteredPieceBehavior,
-            nullable: false,
+            nullable: true,
         },
         allowedAuthDomains: {
             type: ARRAY_COLUMN_TYPE,
             array: isPostgres(),
+            nullable: true,
+            default: [],
         },
         enforceAllowedAuthDomains: {
             type: Boolean,
-            nullable: false,
+            nullable: true,
         },
         emailAuthEnabled: {
             type: Boolean,
-            nullable: false,
+            nullable: true,
         },
         federatedAuthProviders: {
             type: JSONB_COLUMN_TYPE,
+            nullable: true,
         },
         pinnedPieces: {
             type: ARRAY_COLUMN_TYPE,
             array: isPostgres(),
-            nullable: false,
+            nullable: true,
+            default: [],
         },
     },
     indices: [],

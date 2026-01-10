@@ -23,6 +23,7 @@ export const TableWebhookEntity = new EntitySchema<TableWebhookSchema>({
         events: {
             type: ARRAY_COLUMN_TYPE,
             array: isPostgres(),
+            default: [],
         },
         flowId: {
             ...ApIdSchema,

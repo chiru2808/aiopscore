@@ -1,4 +1,4 @@
-import { OPEN_SOURCE_PLAN } from '@activepieces/ee-shared'
+
 import {
     ActivepiecesError,
     ApEdition,
@@ -12,13 +12,14 @@ import {
     PlatformUsage,
     PlatformWithoutSensitiveData,
     spreadIfDefined,
+    TeamProjectsLimit,
     UpdatePlatformRequestBody,
     UserId,
     UserStatus,
 } from '@activepieces/shared'
+import { EntityManager } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
-import { platformPlanService } from '../ee/platform/platform-plan/platform-plan.service'
-import { platformUsageService } from '../ee/platform/platform-usage-service'
+
 import { defaultTheme } from '../flags/theme'
 import { system } from '../helper/system/system'
 import { projectService } from '../project/project-service'
@@ -45,7 +46,7 @@ export const platformService = {
         const platforms = await Promise.all(platformsWithProjects.filter((platformId) => !isNil(platformId)).map((platformId) => platformService.getOneWithPlanOrThrow(platformId)))
         return platforms
     },
-    async create(params: AddParams): Promise<Platform> {
+    async create(params: AddParams, entityManager?: EntityManager): Promise<Platform> {
         const {
             ownerId,
             name,
@@ -73,11 +74,11 @@ export const platformService = {
             pinnedPieces: [],
         }
 
-        const savedPlatform = await platformRepo().save(newPlatform)
+        const savedPlatform = await platformRepo(entityManager).save(newPlatform)
         await userService.addOwnerToPlatform({
             id: ownerId,
             platformId: savedPlatform.id,
-        })
+        }, entityManager)
 
         return savedPlatform
     },
@@ -118,12 +119,7 @@ export const platformService = {
             ...spreadIfDefined('pinnedPieces', params.pinnedPieces),
             smtp: params.smtp,
         }
-        if (!isNil(params.plan)) {
-            await platformPlanService(system.globalLogger()).update({
-                platformId: params.id,
-                ...params.plan,
-            })
-        }
+        // Platform plan updates not supported in Community Edition
         return platformRepo().save(updatedPlatform)
     },
     async getOneOrThrow(id: PlatformId): Promise<Platform> {
@@ -140,6 +136,17 @@ export const platformService = {
                     message: 'Platform not found',
                 },
             })
+        }
+
+        if (!Array.isArray(platform.filteredPieceNames)) {
+            console.warn(`[PlatformService] filteredPieceNames was not array: ${typeof platform.filteredPieceNames}`, platform.filteredPieceNames);
+            platform.filteredPieceNames = [];
+        }
+        if (!Array.isArray(platform.allowedAuthDomains)) {
+             platform.allowedAuthDomains = [];
+        }
+        if (!Array.isArray(platform.pinnedPieces)) {
+             platform.pinnedPieces = [];
         }
 
         return platform
@@ -178,23 +185,44 @@ export const platformService = {
 }
 
 async function getUsage(platform: Platform): Promise<PlatformUsage | undefined> {
-    const edition = system.getEdition()
-    if (edition === ApEdition.COMMUNITY) {
-        return undefined
-    }
-    return platformUsageService(system.globalLogger()).getAllPlatformUsage(platform.id)
+    // Usage tracking not supported in Community Edition
+    return undefined
 }
 
 async function getPlan(platform: Platform): Promise<PlatformPlanLimits> {
-    const edition = system.getEdition()
-    if (edition === ApEdition.COMMUNITY) {
-        return {
-            ...OPEN_SOURCE_PLAN,
-            stripeSubscriptionStartDate: 0,
-            stripeSubscriptionEndDate: 0,
-        }
+    // Platform plan always returns open source defaults in Community Edition  
+    return {
+        includedAiCredits: 100000,
+        aiCreditsOverageLimit: undefined,
+        aiCreditsOverageState: undefined,
+        environmentsEnabled: false,
+        analyticsEnabled: false,
+        showPoweredBy: true,
+        agentsEnabled: true,
+        mcpsEnabled: true,
+        tablesEnabled: true,
+        todosEnabled: true,
+        auditLogEnabled: false,
+        embeddingEnabled: false,
+        managePiecesEnabled: false,
+        manageTemplatesEnabled: false,
+        customAppearanceEnabled: false,
+        teamProjectsLimit: TeamProjectsLimit.UNLIMITED,
+        projectRolesEnabled: false,
+        customDomainsEnabled: false,
+        globalConnectionsEnabled: false,
+        customRolesEnabled: false,
+        apiKeysEnabled: false,
+        ssoEnabled: false,
+        projectsLimit: null,
+        activeFlowsLimit: null,
+        stripeSubscriptionStartDate: undefined,
+        stripeSubscriptionEndDate: undefined,
+        stripeCustomerId: undefined,
+        stripeSubscriptionId: undefined,
+        stripeSubscriptionStatus: undefined,
+        stripeSubscriptionCancelDate: undefined,
     }
-    return platformPlanService(system.globalLogger()).getOrCreateForPlatform(platform.id)
 }
 
 type AddParams = {

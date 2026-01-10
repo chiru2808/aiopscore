@@ -48,7 +48,7 @@ export const pieceSyncService = (log: FastifyBaseLogger) => ({
                     log.warn({ name: piece.name, version: piece.version, status: response.status }, 'Error reading piece metadata')
                     return
                 }
-                const pieceMetadata = await response.json()
+                const pieceMetadata = await response.json() as any
                 await pieceMetadataService(log).create({
                     pieceMetadata,
                     packageType: pieceMetadata.packageType,
@@ -81,7 +81,7 @@ async function listCloudPieces(): Promise<PieceRegistryResponse[]> {
     if (!response.ok) {
         throw new Error(`Failed to fetch cloud pieces: ${response.status}`)
     }
-    return response.json()
+    return response.json() as Promise<PieceRegistryResponse[]>
 }
 
 

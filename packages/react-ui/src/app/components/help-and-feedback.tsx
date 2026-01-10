@@ -1,6 +1,6 @@
 import { QuestionMarkCircledIcon } from '@radix-ui/react-icons';
 import { t } from 'i18next';
-import { BookOpen, History } from 'lucide-react';
+import { BookOpen } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 import {
@@ -14,7 +14,7 @@ import { ApFlagId, supportUrl } from '@activepieces/shared';
 
 export const HelpAndFeedback = () => {
   const { data: showCommunity } = flagsHooks.useFlag<boolean>(
-    ApFlagId.SHOW_COMMUNITY,
+    ApFlagId.SHOW_COMMUNITY
   );
 
   return (
@@ -25,29 +25,10 @@ export const HelpAndFeedback = () => {
       </DropdownMenuSubTrigger>
       <DropdownMenuSubContent className="w-[220px]">
         <DropdownMenuItem asChild>
-          <Link
-            to="https://activepieces.com/docs"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex justify-between w-full"
-          >
+          <Link to="/docs" className="flex justify-between w-full">
             <div className="flex items-center gap-2">
               <BookOpen className="size-4" />
               <span>Documentation</span>
-            </div>
-          </Link>
-        </DropdownMenuItem>
-
-        <DropdownMenuItem asChild>
-          <Link
-            to="https://github.com/activepieces/activepieces/releases"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex justify-between w-full"
-          >
-            <div className="flex items-center gap-2">
-              <History className="size-4" />
-              <span>{t('Changelog')}</span>
             </div>
           </Link>
         </DropdownMenuItem>
@@ -66,7 +47,7 @@ export const HelpAndFeedback = () => {
               >
                 <div className="flex items-center gap-2">
                   <QuestionMarkCircledIcon className="size-4" />
-                  <span>{t('Community Support')}</span>
+                  <span>{t('AIOps Support')}</span>
                 </div>
               </Link>
             </DropdownMenuItem>

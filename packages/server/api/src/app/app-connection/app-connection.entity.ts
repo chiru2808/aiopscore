@@ -49,6 +49,7 @@ export const AppConnectionEntity = new EntitySchema<AppConnectionSchema>({
             type: ARRAY_COLUMN_TYPE,
             array: isPostgres(),
             nullable: false,
+            default: [],
         },
         scope: {
             type: String,
