@@ -45,6 +45,8 @@ import { WorkerMachineEntity } from '../workers/machine/machine-entity'
 import { ProjectMemberEntity } from '../project/project-member.entity'
 import { ProjectPlanEntity } from '../billing/project-plan.entity'
 import { ApiKeyEntity } from '../authentication/api-key/api-key.entity'
+import { KnowledgeBaseEntity } from '../knowledge-base/knowledge-base.entity'
+import { KnowledgeBaseChunkEntity } from '../knowledge-base/knowledge-base-chunk.entity'
 import { createPostgresDataSource } from './postgres-connection'
 
 const databaseType = system.get(AppSystemProp.DB_TYPE)
@@ -89,6 +91,8 @@ function getEntities(): EntitySchema<unknown>[] {
         ProjectMemberEntity, // Added for team collaboration
         ProjectPlanEntity,
         ApiKeyEntity,
+        KnowledgeBaseEntity,
+        KnowledgeBaseChunkEntity,
     ]
 
 

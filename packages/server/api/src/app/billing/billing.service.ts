@@ -87,12 +87,30 @@ export const billingService = {
                 break
             }
             case 'customer.subscription.updated': {
-                 // Handle subscription updates (cancellations, renewals)
+                 const subscription = event.data.object as Stripe.Subscription
+                 const projectId = subscription.metadata?.projectId as ProjectId
+                 // Sync status, etc.
+                 if (projectId && subscription.status === 'active') {
+                      await this.updateProjectPlan(projectId, {
+                         stripeSubscriptionId: subscription.id,
+                         // simplistic tier logic
+                         name: 'PRO', 
+                      })
+                 }
                  break
             }
              case 'customer.subscription.deleted': {
                 const subscription = event.data.object as Stripe.Subscription
-                // Revert to Free?
+                const projectId = subscription.metadata?.projectId as ProjectId
+                if (projectId) {
+                    // Revert to Free
+                     await this.updateProjectPlan(projectId, {
+                         stripeSubscriptionId: null,
+                         stripeCustomerId: null,
+                         name: 'FREE',
+                         subscriptionStartDatetime: new Date().toISOString(),
+                     })
+                }
                  break
             }
         }

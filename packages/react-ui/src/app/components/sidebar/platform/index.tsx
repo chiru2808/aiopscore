@@ -117,7 +117,7 @@ export function PlatformSidebar() {
           to: '/platform/setup/billing',
           label: t('Billing'),
           isSubItem: true,
-          show: edition !== ApEdition.COMMUNITY,
+          show: true, // Force show for testing
         },
       ],
     },

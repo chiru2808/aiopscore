@@ -77,7 +77,6 @@ export const projectMembersController: FastifyPluginAsyncTypebox = async (app) =
             platformId: req.principal.platform.id,
             status: InvitationStatus.PENDING,
             platformRole: null,
-            invitationExpirySeconds: 3600 * 24 * 7, // 7 days
         })
         
         return reply.code(StatusCodes.CREATED).send(invitation)

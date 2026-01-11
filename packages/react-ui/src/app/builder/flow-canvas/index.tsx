@@ -1,17 +1,16 @@
 import {
   ReactFlow,
-  Background,
   SelectionMode,
   OnSelectionChangeParams,
   useStoreApi,
   PanOnScrollMode,
   useKeyPress,
-  BackgroundVariant,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 
 import { useTheme } from '@/components/theme-provider';
+import { AnimatedBackground } from '@/components/custom/animated-background';
 import {
   FlowActionType,
   flowStructureUtil,
@@ -242,13 +241,7 @@ export const FlowCanvas = React.memo(
               onSelectionEnd={onSelectionEnd}
             >
               <AboveFlowWidgets></AboveFlowWidgets>
-              <Background
-                gap={30}
-                size={4}
-                variant={BackgroundVariant.Dots}
-                bgColor={theme === 'dark' ? ' #1a1e23' : '#ffffff'}
-                color={theme === 'dark' ? 'rgba(77, 77, 77, 0.45)' : '#F2F2F2'}
-              />
+              <AnimatedBackground isDarkMode={theme === 'dark'} />
             </ReactFlow>
           </CanvasContextMenu>
         </FlowDragLayer>

@@ -27,6 +27,7 @@ import McpPage from '../routes/mcp-servers/id';
 import { ProjectReleasesPage } from '../routes/project-release';
 import ViewRelease from '../routes/project-release/view-release';
 import { VerifyEmail } from '@/features/authentication/components/verify-email';
+import { BillingPage } from '@/app/routes/platform/setup/billing';
 
 import { RunsPage } from '../routes/runs';
 import { FlowRunPage } from '../routes/runs/id';
@@ -280,6 +281,16 @@ const routes = [
     ),
   },
 
+  ...ProjectRouterWrapper({
+    path: '/platform/setup/billing',
+    element: (
+      <ProjectDashboardLayout>
+          <PageTitle title="Billing">
+            <BillingPage />
+          </PageTitle>
+      </ProjectDashboardLayout>
+    ),
+  }),
   ...ProjectRouterWrapper({
     path: routesThatRequireProjectId.mcps,
     element: (
