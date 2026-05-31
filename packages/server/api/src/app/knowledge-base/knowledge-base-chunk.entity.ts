@@ -11,7 +11,10 @@ export interface KnowledgeBaseChunk {
 export const KnowledgeBaseChunkEntity = new EntitySchema<KnowledgeBaseChunk>({
     name: 'knowledge_base_chunk',
     columns: {
-        id: ApIdSchema,
+        id: {
+            ...ApIdSchema,
+            primary: true,
+        },
         knowledgeBaseId: {
             ...ApIdSchema,
         },
@@ -34,15 +37,4 @@ export const KnowledgeBaseChunkEntity = new EntitySchema<KnowledgeBaseChunk>({
             unique: false,
         },
     ],
-    relations: {
-        knowledgeBase: {
-            type: 'many-to-one',
-            target: 'knowledge_base',
-            joinColumn: {
-                name: 'knowledgeBaseId',
-                referencedColumnName: 'id',
-            },
-            inverseSide: 'chunks',
-        } as any,
-    },
 })

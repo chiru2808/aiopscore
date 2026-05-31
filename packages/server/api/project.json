@@ -27,7 +27,8 @@
             "input": ".",
             "output": "."
           },
-          "packages/server/api/src/assets"
+          "packages/server/api/src/assets",
+          "packages/server/api/src/favicon.ico"
         ]
       },
       "configurations": {

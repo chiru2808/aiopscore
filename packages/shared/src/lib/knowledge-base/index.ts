@@ -13,17 +13,15 @@ export enum KnowledgeBaseStatus {
     FAILED = 'FAILED',
 }
 
-export const KnowledgeBase = Type.Composite([
-    BaseModelSchema,
-    Type.Object({
-        projectId: Type.String(),
-        displayName: Type.String(),
-        description: Type.Optional(Type.String()),
-        type: Type.Enum(KnowledgeBaseType),
-        status: Type.Enum(KnowledgeBaseStatus),
-        metadata: Type.Optional(Type.Record(Type.String(), Type.Unknown())),
-    }),
-])
+export const KnowledgeBase = Type.Object({
+    ...BaseModelSchema,
+    projectId: Type.String(),
+    displayName: Type.String(),
+    description: Type.Optional(Type.String()),
+    type: Type.Enum(KnowledgeBaseType),
+    status: Type.Enum(KnowledgeBaseStatus),
+    metadata: Type.Optional(Type.Record(Type.String(), Type.Unknown())),
+})
 
 export type KnowledgeBase = Static<typeof KnowledgeBase>
 

@@ -1,5 +1,5 @@
 /* eslint-disable */
-export default {
+module.exports = {
   displayName: 'pieces-framework',
   preset: '../../../../jest.preset.js',
   globals: {},

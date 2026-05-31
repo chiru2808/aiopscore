@@ -5,7 +5,7 @@ process.env.AP_TEST_MODE = 'true'
 process.env.AP_DEV_PIECES = 'http,data-mapper,approval,webhook'
 
 /* eslint-disable */
-export default {
+module.exports = {
   displayName: 'engine',
   preset: '../../jest.preset.js',
   testEnvironment: 'node',

@@ -105,8 +105,8 @@ export const billingService = {
                 if (projectId) {
                     // Revert to Free
                      await this.updateProjectPlan(projectId, {
-                         stripeSubscriptionId: null,
-                         stripeCustomerId: null,
+                         stripeSubscriptionId: undefined,
+                         stripeCustomerId: undefined,
                          name: 'FREE',
                          subscriptionStartDatetime: new Date().toISOString(),
                      })

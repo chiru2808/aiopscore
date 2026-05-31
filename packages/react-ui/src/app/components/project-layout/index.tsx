@@ -14,6 +14,7 @@ import { authenticationSession } from '../../../lib/authentication-session';
 import { ProjectDashboardSidebar } from '../sidebar/dashboard';
 
 import { ProjectDashboardLayoutHeader } from './project-dashboard-layout-header';
+import { ApiKeyOnboardingModal } from './ApiKeyOnboardingModal';
 
 export type ProjectDashboardLayoutHeaderTab = {
   to: string;
@@ -75,6 +76,7 @@ export function ProjectDashboardLayout({
               </>
             )}
             <div className="px-4"> {children} </div>
+            <ApiKeyOnboardingModal />
           </div>
         </SidebarInset>
       </SidebarProvider>

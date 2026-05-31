@@ -12,6 +12,7 @@ import { StatusCodes } from 'http-status-codes'
 import { apId } from '@activepieces/shared'
 import { knowledgeBaseService } from './knowledge-base.service'
 
+// Trigger rebuild to pick up new shared package types
 export const knowledgeBaseController: FastifyPluginAsyncTypebox = async (app) => {
     app.post('/', {
         schema: {
@@ -21,6 +22,14 @@ export const knowledgeBaseController: FastifyPluginAsyncTypebox = async (app) =>
             },
         },
     }, async (request) => {
+        if (request.principal.type === PrincipalType.WORKER || 
+            request.principal.type === PrincipalType.UNKNOWN) {
+            throw new ActivepiecesError({
+                code: ErrorCode.AUTHORIZATION,
+                params: {},
+            })
+        }
+        
         return knowledgeBaseService(app.log).create({
             id: apId(),
             projectId: request.principal.projectId,
@@ -43,6 +52,14 @@ export const knowledgeBaseController: FastifyPluginAsyncTypebox = async (app) =>
             },
         },
     }, async (request) => {
+        if (request.principal.type === PrincipalType.WORKER || 
+            request.principal.type === PrincipalType.UNKNOWN) {
+            throw new ActivepiecesError({
+                code: ErrorCode.AUTHORIZATION,
+                params: {},
+            })
+        }
+        
         return knowledgeBaseService(app.log).list({
             projectId: request.principal.projectId,
             limit: request.query.limit ?? 10,

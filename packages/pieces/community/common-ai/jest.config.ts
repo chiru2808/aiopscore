@@ -1,4 +1,4 @@
-export default {
+module.exports = {
   displayName: 'common-ai',
   preset: '../../../../jest.preset.js',
   testEnvironment: 'node',

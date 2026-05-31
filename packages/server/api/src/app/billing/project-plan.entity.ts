@@ -16,6 +16,11 @@ export const ProjectPlanEntity = new EntitySchema<ProjectPlanSchema>({
             ...ApIdSchema,
             nullable: false,
         },
+        locked: {
+            type: Boolean,
+            default: false,
+            nullable: false,
+        },
         stripeCustomerId: {
             type: String,
             nullable: true,
@@ -26,11 +31,25 @@ export const ProjectPlanEntity = new EntitySchema<ProjectPlanSchema>({
         },
         subscriptionStartDatetime: {
             type: TIMESTAMP_COLUMN_TYPE,
-            nullable: false,
+            nullable: true,
         },
         name: {
             type: String,
             nullable: false,
+        },
+        piecesFilterType: {
+            type: String,
+            nullable: false,
+            default: 'NONE',
+        },
+        pieces: {
+            type: 'simple-json',
+            nullable: false,
+            default: '[]',
+        },
+        aiCredits: {
+            type: Number,
+            nullable: true,
         },
     },
     indices: [

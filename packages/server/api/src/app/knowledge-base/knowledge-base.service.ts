@@ -59,7 +59,7 @@ export const knowledgeBaseService = (log: FastifyBaseLogger) => ({
             
             const openai = createOpenAI({
                 apiKey: config.apiKey,
-                baseURL: config.baseUrl, 
+                baseURL: aiProviderService.getBaseUrl('openai', config),
             })
             
             const embeddings: number[][] = []
@@ -110,7 +110,7 @@ export const knowledgeBaseService = (log: FastifyBaseLogger) => ({
             entity: KnowledgeBaseEntity,
             query: {
                 limit: params.limit,
-                afterCursor: params.cursor,
+                afterCursor: params.cursor ?? undefined,
                 order: 'DESC',
             },
         })
